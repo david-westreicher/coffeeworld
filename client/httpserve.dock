@@ -1,0 +1,4 @@
+FROM frolvlad/alpine-python3
+
+WORKDIR /app
+ENTRYPOINT python3 -m http.server 8080

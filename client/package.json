@@ -1,0 +1,17 @@
+{
+  "name": "gameclient",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/index.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "simple-peer": "^6.0.4",
+    "coffee-loader": "^0.7.2",
+    "coffee-script": "^1.10.0",
+    "webpack": "^1.13.1"
+  }
+}

@@ -1,0 +1,32 @@
+version: '2'
+services:
+  httpserve:
+    build:
+      # TODO use context
+      context: client
+      dockerfile: httpserve.dock
+    image: httpserve 
+    container_name: httpserve-container
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./client/public:/app
+  webpack:
+    build:
+      context: client
+      dockerfile: webpack.dock
+    image: webpack
+    container_name: webpack-container
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+  webrtc:
+    build:
+      context: server
+      dockerfile: webrtc.dock
+    image: webrtc
+    container_name: webrtc-container
+    ports:
+      - "9000:9000"
+    volumes:
+      - /app/node_modules
