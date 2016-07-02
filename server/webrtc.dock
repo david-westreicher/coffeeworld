@@ -12,11 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends libncurses5-dev
 RUN apt-get update && apt-get install -y --no-install-recommends libssl-dev
 RUN apt-get update && apt-get install -y --no-install-recommends libnss3-dev
 RUN apt-get update && apt-get install -y --no-install-recommends libexpat-dev
+RUN apt-get update && apt-get install -y --no-install-recommends procps
 
 RUN nodejs --version
 RUN npm --version
 
 WORKDIR /app
-COPY . /app
+COPY package.json /app/package.json
 RUN npm install
-ENTRYPOINT npm start
+RUN npm start
+CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"

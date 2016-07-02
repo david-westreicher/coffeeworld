@@ -29,4 +29,5 @@ services:
     ports:
       - "9000:9000"
     volumes:
+      - ./server:/app
       - /app/node_modules
