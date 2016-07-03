@@ -3,6 +3,7 @@ FROM mhart/alpine-node
 WORKDIR /app
 COPY . /app
 
-RUN npm install webpack -g
+# RUN npm install webpack -g
+RUN npm install webpack-dev-server -g
 RUN npm install
-ENTRYPOINT webpack --progress --colors --watch
+ENTRYPOINT webpack-dev-server --port 8081

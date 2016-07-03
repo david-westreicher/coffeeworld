@@ -10,5 +10,8 @@ module.exports = {
 	},
 	resolve: {
 		extensions: ["", ".web.coffee", ".web.js", ".coffee", ".js"]
+	},
+	watchOptions: {
+	    poll: 1000
 	}
 };

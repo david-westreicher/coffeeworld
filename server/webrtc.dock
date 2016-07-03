@@ -6,7 +6,6 @@ RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -E -
 RUN apt-get update && apt-get install -y --no-install-recommends nodejs-legacy
 RUN apt-get update && apt-get install -y --no-install-recommends npm
 RUN apt-get update && apt-get install -y --no-install-recommends python
-# RUN apt-get update && apt-get install -y --no-install-recommends git-all
 RUN apt-get update && apt-get install -y --no-install-recommends pkg-config
 RUN apt-get update && apt-get install -y --no-install-recommends libncurses5-dev
 RUN apt-get update && apt-get install -y --no-install-recommends libssl-dev

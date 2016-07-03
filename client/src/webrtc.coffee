@@ -19,6 +19,7 @@ class WebRTC
                 connection.close()
                 @conn_cbk()
             @peer.on 'data', (data) =>
+                console.log 'WEBRTC ondata'
                 @data_cbk data
             @peer.on 'close', () =>
                 console.log 'WEBRTC onclose'

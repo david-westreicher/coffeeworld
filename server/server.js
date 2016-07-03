@@ -1,8 +1,10 @@
+'use strict';
+
 var Peer = require('simple-peer');
 var wrtc = require('wrtc');
 var WebSocketServer = require('ws').Server;
 var PORT = 9000;
-var TICKRATE = 16;
+var TICKRATE = 1000;
 
 var wss = new WebSocketServer({ port: PORT });
 console.log('Starting websocketserver on port: ' + PORT);
@@ -23,23 +25,26 @@ var broadcaster = setInterval(function(){
     //console.log(Object.keys(peers).length);
     //TODO peers access should be secured with mutex
     //console.log(state);
-    for(var toremoveid in toremove){
-        delete peers[toremoveid];
+    for(const toremoveid of toremove){
+        //delete peers[toremoveid];
         delete state[toremoveid];
         console.log('removing id: '+ toremoveid);
         console.log('resulting state: ');
         console.log(state);
         console.log(Object.keys(state));
     }
+    toremove = []
+    console.log(state);
     var players = Object.keys(state).length;
     var index = 0;
-    Object.keys(state).forEach(function(id){
+    for(let id of Object.keys(state)){
         messagebuf[index*2+0] = state[id][0];
         messagebuf[index*2+1] = state[id][1];
         index++;
-    });
-    for(var c in Object.keys(peers)){
-        var peer = peers[c];
+    }
+    for(let id of Object.keys(peers)){
+        var peer = peers[id];
+        //console.log('peer', peer)
         if(peer && peer.connected)
             //TODO use reusable buffer
             peer.send(messagebuf.slice(0,players*2));

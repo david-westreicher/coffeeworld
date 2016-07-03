@@ -31,10 +31,11 @@ render = (state) ->
 webrtc = new WebRTC Config.server,
     () ->
         console.log('WEBRTC connected')
-        setInterval (() -> 
+        setInterval (() ->
             div2.innerHTML = 'local: ' + pos.toString()
             webrtc.send(pos)), Config.tickrate
     (data)->
+        newindices = []
         for i in [0...data.length] by 4
             index = Math.floor(i/4)
             # console.log('index ' + index)
@@ -42,10 +43,18 @@ webrtc = new WebRTC Config.server,
                 console.log('new player')
                 newdiv()
                 state[index] = [0,0]
-            state[index][0] = data.readInt16LE(i+0);
-            state[index][1] = data.readInt16LE(i+2);
-        render state
-
+            state[index][0] = data.readInt16LE(i+0)
+            state[index][1] = data.readInt16LE(i+2)
+            newindices.push index
+        console.log 'newindices', newindices.toString()
+        for id of state
+            if (id in newindices)
+                console.log 'deleting', id
+                delete state[id]
+        # console.log('received data')
+        # console.log(data)
+        # console.log('new state')
+        # console.log(state)
 
 update = (pos) ->
     dir = [0,0]

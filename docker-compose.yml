@@ -2,7 +2,6 @@ version: '2'
 services:
   httpserve:
     build:
-      # TODO use context
       context: client
       dockerfile: httpserve.dock
     image: httpserve 
@@ -17,6 +16,8 @@ services:
       dockerfile: webpack.dock
     image: webpack
     container_name: webpack-container
+    ports:
+      - "8081:8081"
     volumes:
       - ./client:/app
       - /app/node_modules
