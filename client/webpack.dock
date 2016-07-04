@@ -1,8 +1,9 @@
 FROM mhart/alpine-node
 
-WORKDIR /app
-COPY . /app
-
 RUN npm install webpack -g
+
+WORKDIR /app
+COPY package.json /app/package.json
 RUN npm install
+COPY . /app
 ENTRYPOINT webpack --progress --colors --watch
