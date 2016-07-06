@@ -1,5 +1,5 @@
-import Game from '../game'
-import Input from '../input'
+import Game from '../../game'
+import Input from '../../input'
 import Renderer from './renderer'
 
 class SampleGame extends Game{

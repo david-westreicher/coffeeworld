@@ -1,4 +1,4 @@
-import SampleGame from './samplegame/game'
+import SampleGame from './examples/cubes/game'
 
 (() =>{
     const game = new SampleGame()
