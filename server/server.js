@@ -19,9 +19,10 @@ const channelConfig = {
     ordererd: false,
     maxRetransmits: 0
 }
+
+let glob_id = 0
 wss.on('connection', (ws) => {
-    const peers = {}
-    const id = Object.keys(peers).length
+    const id = glob_id++
     const peer = new Peer({
         initiator: true,
         wrtc: wrtc,
@@ -35,7 +36,6 @@ wss.on('connection', (ws) => {
     peer.on('connect', () => {
         gameserver.newpeer(peer)
         console.log('PEER '+id+' connected')
-        peers[id] = peer
     })
     peer.on('data', (data) => {
         gameserver.newdata(data, peer)

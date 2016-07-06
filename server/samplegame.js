@@ -27,12 +27,12 @@ class SampleGame{
     tick(){
         for(const cmd of this.cmds){
             switch(cmd.type){
-                case 'normal':
-                    this.state.set(cmd.id, cmd.pos)
-                    break
-                case 'delete':
-                    this.state.delete(cmd.id)
-                    break
+            case 'normal':
+                this.state.set(cmd.id, cmd.pos)
+                break
+            case 'delete':
+                this.state.delete(cmd.id)
+                break
             }
         }
         this.cmds = []

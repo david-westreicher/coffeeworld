@@ -55,7 +55,7 @@ let webrtc = new WebRTC(Config.server,
         console.log('WEBRTC connected')
         setInterval(
             () => {
-                div2.innerHTML = 'local: ' + pos.toString()
+                div2.innerHTML = 'local: ' + pos.toString() + ', id: ' + id
                 if(id>=0){
                     div2.style.background = getcolor(id)
                     webrtc.send(id, pos)
