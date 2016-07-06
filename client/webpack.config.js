@@ -1,17 +1,23 @@
+var path = require('path');
+var dir_js = path.resolve(__dirname, 'src');
+var dir_build = path.resolve(__dirname, 'public');
+
 module.exports = {
-    entry: "./src/index.coffee",
+    entry: "./src/index.js",
     output: {
         filename: "public/bundle.js"
     },
 	module: {
 		loaders: [
-			{ test: /\.coffee$/, loader: "coffee" }
+			{ test: dir_js, loader: "babel-loader" }
 		]
 	},
-	resolve: {
-		extensions: ["", ".web.coffee", ".web.js", ".coffee", ".js"]
-	},
-	watchOptions: {
-	    poll: 1000
-	}
+    resolveLoader: {
+        root: path.join(__dirname, 'node_modules')
+    },
+    // Create Sourcemaps for the bundle
+    devtool: 'source-map',
+    devServer: {
+        contentBase: dir_build,
+    }
 };
