@@ -33,8 +33,7 @@ class GameServer{
         let cmd = this.gameimpl.cmd_from_data(data)
         const oldid = this.peerids.get(peer)
         if(oldid != cmd.id){
-            console.log('error')
-            throw 'error', oldid, cmd.id
+            throw 'oldid!=cmd.id: ', oldid, cmd.id
         }
         this.peerids.set(peer, cmd.id)
         this.commandqueue.push(cmd)
