@@ -6,17 +6,14 @@ const Peer = require('simple-peer')
 const wrtc = require('wrtc')
 const WebSocketServer = require('ws').Server
 
-const GameServer = require('./gameserver.js')
-const Cubes = require('./shared/cubes/game.js')
-const gameserver = new GameServer(new Cubes())
+const GameServer = require('./shared/gameserver.js')
+const gameserver = new GameServer()
 
 const wss = new WebSocketServer({ port: PORT })
 console.log('Starting websocketserver on port: ' + PORT)
 
 
 const channelConfig = {
-    ordererd: false,
-    maxRetransmits: 0
 }
 
 let glob_id = 0
@@ -25,12 +22,20 @@ wss.on('connection', (ws) => {
     const peer = new Peer({
         initiator: true,
         wrtc: wrtc,
-        channelConfig:channelConfig,
+        config: {
+            'iceServers': [ {url: 'stun:stun1.l.google.com:19305'} ]
+        },
+        channelConfig: {
+            ordererd: false,
+            maxRetransmits: 0
+        },
+        trickle: false,
         offerConstraints:{}
     })
     peer.on('signal', (data) => {
-        console.log('PEER '+id+' signal: '+data)
-        ws.send(JSON.stringify(data))
+        const json = JSON.stringify(data)
+        console.log('PEER '+id+' signal: '+json)
+        ws.send(json)
     })
     peer.on('connect', () => {
         gameserver.newpeer(peer)

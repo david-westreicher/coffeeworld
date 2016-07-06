@@ -13,7 +13,13 @@ class WebRTC {
         connection.onopen = () => {
             console.log('WEBSOCKET onopen')
             console.log(this)
-            this.peer = new Peer()
+            this.peer = new Peer({
+                initiator: false,
+                config: {
+                    'iceServers': [ {url: 'stun:stun1.l.google.com:19305'} ]
+                },
+                trickle: false,
+            })
             this.peer.on('signal', (data) => {
                 console.log('WEBRTC onsignal')
                 console.log(data)
@@ -25,6 +31,9 @@ class WebRTC {
             })
             this.peer.on('data', (data) => {
                 this.data_cbk(data)
+            })
+            this.peer.on('error', (error) => {
+                console.log('WEBRTC onerror', error)
             })
             this.peer.on('close', () => {
                 console.log('WEBRTC onclose')

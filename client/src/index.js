@@ -1,14 +1,11 @@
-import Game from './game'
-import Cubes from './shared/cubes/game'
-import Renderer from './shared/cubes/renderer'
+import Config from './shared/config'
+import GameClient from './shared/gameclient'
 
 (() =>{
-    const game = new Game(new Cubes(), new Renderer())
+    const game = new GameClient(Config.server_ip)
     let main = () => {
         window.requestAnimationFrame(main)
         game.tick()
-        game.send_to_server()
-        game.render()
     }
     main()
 })()
