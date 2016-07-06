@@ -1,6 +1,7 @@
 import WebRTC from './webrtc'
 import Config from './config'
 import Input from './input'
+import rand from 'random-seed'
 
 let div = document.createElement('div')
 document.body.appendChild(div)
@@ -21,38 +22,71 @@ let newdiv = () => {
     divs.push(div)
 }
 
+const colors = new Map()
+let getcolor = (id) => {
+    let color = colors.get(id)
+    if(!color){
+        const tmprand = rand.create(id)
+        for(let i=0;i<id;i++)
+            tmprand(10)
+        const letters = '0123456789ABCDEF'.split('')
+        color = '#'
+        for(let i=0;i<6;i++)
+            color += letters[tmprand(16)]
+        colors.set(id,color)
+    }
+    return color
+}
+
 let render = (state) => {
-    let index = 0
-    for(div of divs){
-        let divpos = state.get(index)
-        div.style.left = divpos[0] + 'px'
-        div.style.top = divpos[1] + 'px'
-        index++
+    let divi = 0
+    for(const [id, pos] of state){
+        const div = divs[divi]
+        div.style.background = getcolor(id)
+        div.style.left = pos[0] + 'px'
+        div.style.top = pos[1] + 'px'
+        divi++
     }
 }
 
+let id = -1
 let webrtc = new WebRTC(Config.server,
     () => {
         console.log('WEBRTC connected')
         setInterval(
             () => {
                 div2.innerHTML = 'local: ' + pos.toString()
-                webrtc.send(pos)
+                if(id>=0){
+                    div2.style.background = getcolor(id)
+                    webrtc.send(id, pos)
+                }
             },
             Config.tickrate)
     },
     (data) => {
-        for(let i=0; i<data.length; i+=4){
-            let index = Math.floor(i/4)
-            // console.log('index ' + index)
-            if(!state.has(index)){
-                console.log('new player')
-                newdiv()
-                state.set(index, [0,0])
-            }
-            let pos = state.get(index)
-            pos[0] = data.readInt16LE(i+0)
-            pos[1] = data.readInt16LE(i+2)
+        if(id==-1){
+            id = data.readInt32LE(0)
+            console.log('id: ', id)
+            return
+        }
+        const intsperplayer = 3 // id: 1, pos: 2
+        const bytes_per_int = 2
+        const players = (data.length/intsperplayer)/bytes_per_int
+        state = new Map()
+        for(let i=0; i<players; i++){
+            const offset = i*intsperplayer*bytes_per_int
+            const pos = [0,0]
+            const id = data.readInt16LE(offset+0*bytes_per_int)
+            pos[0] = data.readInt16LE(offset+1*bytes_per_int)
+            pos[1] = data.readInt16LE(offset+2*bytes_per_int)
+            state.set(id, pos)
+        }
+        while(divs.length < state.size){
+            newdiv()
+        }
+        while(divs.length > state.size){
+            const div = divs.pop()
+            div.parentNode.removeChild(div)
         }
         render(state)
     }

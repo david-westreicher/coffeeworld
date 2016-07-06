@@ -3,7 +3,7 @@ import Peer from 'simple-peer'
 
 class WebRTC {
     constructor(ws, conn_cbk, data_cbk){
-        this.arrbuff = new Int16Array([0,0])
+        this.arrbuff = new Int16Array(3)
         this.ws = ws
         this.conn_cbk = conn_cbk
         this.data_cbk = data_cbk
@@ -45,9 +45,10 @@ class WebRTC {
         }
     }
 
-    send(pos){
-        this.arrbuff[0] = pos[0]
-        this.arrbuff[1] = pos[1]
+    send(id, pos){
+        this.arrbuff[0] = id
+        this.arrbuff[1] = pos[0]
+        this.arrbuff[2] = pos[1]
         if(this.peer.connected)
             this.peer.send(this.arrbuff)
     }
