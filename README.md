@@ -43,6 +43,7 @@ and visit ```localhost:8080```
   * ```shared/``` - contains the actual game code: renderer, snapshot <--> state conversion, cmd <--> event conversion
     * ```config.js``` - declare which game to load here
   * ```docker-compose.yml``` - configures the docker containers, moves the ```shared/``` folder into ```client/``` and ```server/```
+
 ## Development
 Every game should be located in a ```shared/<game-name>``` folder. 
 It should use the same file structure as the example game: **cubes**
