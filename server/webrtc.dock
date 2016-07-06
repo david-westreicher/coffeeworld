@@ -1,6 +1,5 @@
 FROM node:6.2.2
 
-RUN apt-get update && apt-get install -y --no-install-recommends python
 RUN apt-get update && apt-get install -y --no-install-recommends pkg-config
 RUN apt-get update && apt-get install -y --no-install-recommends libncurses5-dev
 RUN apt-get update && apt-get install -y --no-install-recommends libssl-dev
@@ -11,4 +10,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends procps
 WORKDIR /app
 COPY package.json /app/package.json
 RUN npm install
-CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
+CMD npm start & exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
