@@ -1,10 +1,14 @@
 import Config from './config'
 import WebRTC from './webrtc'
+import Input from './input'
 
 class Game{
-    constructor(){
+    constructor(game, renderer){
         this.id = -1
-        this.state = new Map()
+        this.game = game
+        this.renderer = renderer
+        this.input = new Input()
+        //TODO remove empty callback from webrtc
         this.webrtc = new WebRTC(Config.server,
             () => {},
             this.ondata.bind(this)
@@ -18,38 +22,32 @@ class Game{
             console.log('id: ', this.id)
             return
         }
-        const intsperplayer = 3 // id: 1, pos: 2
+
+        const intsperentity = 1 + this.game.intsperentity()
         const bytes_per_int = 2
-        const players = (data.length/intsperplayer)/bytes_per_int
-        this.state = new Map()
+        const players = (data.length/intsperentity)/bytes_per_int
+        const newstate = new Map()
         for(let i=0; i<players; i++){
-            const offset = i*intsperplayer*bytes_per_int
-            const id = data.readInt16LE(offset+0*bytes_per_int)
-            const entity_state_data = data.slice(offset+1*bytes_per_int, offset+intsperplayer*bytes_per_int)
-            this.state.set(id, this.entity_state_from_data(entity_state_data))
+            const offset = i*intsperentity*bytes_per_int
+            const id = data.readInt16LE(offset + 0*bytes_per_int)
+            const entity_state_data = data.slice(offset + 1*bytes_per_int, offset + intsperentity*bytes_per_int)
+            newstate.set(id, this.game.entity_state_from_data(entity_state_data))
         }
+        this.game.state = newstate
     }
 
     send_to_server(){
         if(this.id==-1)
             return
-        this.webrtc.send(this.id, this.get_cmd())
+        const cmds = this.game.netcmd_from_input(this.input)
+        this.webrtc.send(this.id, cmds)
     }
 
     tick(){
-        throw 'NotImplemented'
     }
 
     render(){
-        throw 'NotImplemented'
-    }
-
-    get_cmd(){
-        throw 'NotImplemented'
-    }
-
-    entity_state_from_data(data){
-        throw 'NotImplemented'
+        this.renderer.render(this.game.state, this.id)
     }
 }
 
