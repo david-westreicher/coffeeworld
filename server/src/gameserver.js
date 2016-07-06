@@ -3,10 +3,9 @@
 const TICK_RATE = 1000.0/20
 
 class GameServer{
-    constructor(gameimpl){
+    constructor(){
         this.peerids = new Map()
         this.commandqueue = []
-        this.gameimpl = gameimpl
         this.start()
     }
 
@@ -30,7 +29,7 @@ class GameServer{
     }
 
     newdata(data, peer){
-        let cmd = this.gameimpl.cmd_from_data(data)
+        let cmd = this.cmd_from_data(data)
         const oldid = this.peerids.get(peer)
         if(oldid != cmd.id){
             throw 'oldid!=cmd.id: ', oldid, cmd.id
@@ -63,12 +62,12 @@ class GameServer{
         const queuesize = this.commandqueue.length
         for(let i=0; i<queuesize; i++){
             let cmd = this.commandqueue.shift()
-            this.gameimpl.add_cmd(cmd)
+            this.add_cmd(cmd)
         }
-        this.gameimpl.tick()
+        this.real_tick()
 
         for(const [peer, id] of this.peerids){
-            const buffer = this.gameimpl.buff_from_id(id)
+            const buffer = this.buff_from_id(id)
             peer.send(buffer)
         }
     }
@@ -80,6 +79,22 @@ class GameServer{
         }
         clearInterval(this.tickinterval)
         this.tickinterval = null
+    }
+
+    cmd_from_data(data){
+        throw 'NotImplemented'
+    }
+
+    add_cmd(cmd){
+        throw 'NotImplemented'
+    }
+
+    real_tick(){
+        throw 'NotImplemented'
+    }
+
+    buff_from_id(id){
+        throw 'NotImplemented'
     }
 
 }

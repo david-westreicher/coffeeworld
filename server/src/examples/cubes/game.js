@@ -1,8 +1,9 @@
 'use strict'
+const GameServer = require('../../gameserver.js')
 
-
-class SampleGame{
+class SampleGame extends GameServer{
     constructor(){
+        super()
         this.state = new Map()
         this.cmds = []
     }
@@ -24,7 +25,7 @@ class SampleGame{
         this.cmds.push(cmd)
     }
 
-    tick(){
+    real_tick(){
         for(const cmd of this.cmds){
             switch(cmd.type){
             case 'normal':
