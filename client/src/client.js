@@ -40,7 +40,7 @@ class Game{
     on_new_frame(fun){
         const main = () => {
             window.requestAnimationFrame(main)
-            fun()
+            fun(this.statemanager.state)
         }
         main()
     }

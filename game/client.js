@@ -18,8 +18,7 @@ class Cubes extends Client{
         command.down = this.input.isdown(40)
     }
 
-    tick(){
-        const state = this.statemanager.state
+    tick(state){
         let player_entity = -1
         for(const [id, entity] of state){
             if(entity.playerid == this.playerid){
