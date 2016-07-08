@@ -19,7 +19,7 @@ class CubesServer extends GameServer{
         this.statemanager.delete_entity(entityid)
     }
 
-    real_tick(state, cmds){
+    tick(state, cmds){
         for(const cmd of cmds){
             const entity = state.get(this.entityid_from_playerid.get(cmd.playerid))
             const dir = [0,0]

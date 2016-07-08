@@ -78,11 +78,11 @@ class GameServer{
             return
         }
         console.log('Starting GameServer with TICKRATE: '+ this.tick_rate)
-        this.tickinterval = setInterval(this.tick.bind(this), this.tick_rate)
+        this.tickinterval = setInterval(this._tick.bind(this), this.tick_rate)
     }
 
-    tick(){
-        this.real_tick(this.statemanager.state, this.cmds.slice(0,this.cmdspointer))
+    _tick(){
+        this.tick(this.statemanager.state, this.cmds.slice(0,this.cmdspointer))
         this.cmdspointer = 0
 
         for(const [peer, playerid] of this.peerids){
