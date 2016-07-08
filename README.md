@@ -12,51 +12,59 @@ and visit `localhost:8080`
 
 ## Documentation
 **Coffeeworlds** implements some ideas of the [Quake 3 Networking Model](http://fabiensanglard.net/quake3/network.php).
+
+Some definitions:
+  1. an `entity` is a serializable object (e.g.: `{posx: 23.2, posy: 43.9}`)
+  2. a `state` is a map from `ids` to `entities`
+  3. a `command` is a serializable object (e.g.: `{mousedown: true, leftarrow: false}`)
+
+Control-flow:
   1. Client-Server model implemented ontop of [WebRTC](https://en.wikipedia.org/wiki/WebRTC)
-  2. Client only sends commands: pressed keys, mouse position, ...
-  3. Server processes the commands and broadcasts the resulting state to the Clients
-  4. Clients receive the snapshot and renders them
+  2. **Clients** only **sends** `commands`: pressed keys, mouse position, ...
+  3. **Server** **processes** the `commands` and **broadcasts** the resulting `state` to the Clients
+  4. **Clients** **receive** the `state` and renders it
 
-### Code Structure
-  * `client/`
-    * `public/` - the folder which is served with the httpserve-container
-      * `index.html` - empty html which just inserts the generated 
-      * `bundle.js`
-    * `src/`
-      * `client.js` - handles the Client-Server communication
-        * sends cmds to the server
-        * updates client state with received snapshots
-      * `webrtc.js` - connects to the server's WebSocket and establishes the WebRTC connection
-    * `package.json` - defines the client dependencies
-    * `httpserve.dock` - the docker image for the static http server (serves `public/`)
-    * `webpack.dock` - the docker image for continuous development (generates `public/bundle.js` from `src/` and `shared/`)
-  * `server/`
-    * `src/`
-      * `server.js` - uses a [WebSocket](https://www.npmjs.com/package/ws) for WebRTC signalling
-      * `gameserver.js` - handles the Client-Server communication: 
-        * manages player-ids
-        * translates commands to events
-        * broadcasts new state
-    * `package.json` - defines the server dependencies
-    * `restart.sh` - handy utility to restart the server if changes were made
-    * `webrtc.dock` - the docker image for a gameserver
-  * `game/` - contains the actual game code: logic, renderer, input
-  * `shared/` - contains code for `client` and `server`
-    * `byteencoder` - handles conversion between objects and bytebuffer
-    * `statemanager` - handles conversion between game state and bytebuffer, manages entity ids
-  * `docker-compose.yml` - configures the docker containers, copies the `shared/` and `game/` folder into `client/` and `server/`
+The framework takes care of the communication of `commands` and `states`.
+In order to serialize them (to binary) we need a static definition (can't add properties) of it's types (see `game/config.js`).
 
-## Development
-The actual game code is located in the `game` folder.
-It should use the same file structure as the example game: **cubes**
+For instance 
+  * commands: 
 
-`game/` - a simple example game (one cube per player, move with arrow keys)
+    ```
+    command = {
+        left: false,
+        right: true,
+        up: false,
+        down: false
+    }
+    ```
+    
+    will get translated to only one byte (bit-packing)
+  * states: 
+
+    ```
+    state = {
+        59: {
+            posx: 23.45, 
+            posy: 67.89
+        },
+        28: {
+            posx: 37.19,
+            posy: 51.48}
+        }
+    }
+    ```
+    
+    will get translated into `[59, 23.45, 67.89, 28, 37.19, 51.48]` and needs `20 = 16 (4 floats) + 4 (2*id -> int16)` bytes
+
+## Example Game - cubes
+`game/` - a simple example game (one cube per player, move with arrow keys). each entity 
   * `client.js` -
-    * every frame: render current state
-    * every nettick: send key and mouse input
+    * every frame: render all entities of state with cubes
+    * every nettick: send arrow keys and mouse input
   * `config.js` - defines the command/entity protocol, tickrate and server ip
   * `input.js` - handles mouse and keyboard input (async, not polled)
-  * `renderer.js` - takes a state as input and renders it (CSS absolute)
+  * `renderer.js` - takes a state of entities and renders it (CSS absolute)
   * `server.js` - 
     * new player joined -> generate new entity and set playerid
     * player left -> remove entity with corresponding playerid
@@ -65,8 +73,13 @@ It should use the same file structure as the example game: **cubes**
       * for every bullet: move bullet
   * `input.js` - simple wrapper for synchronous input polling
 
+## Development
+The actual game code is located in the `game` folder.
 
-To start a new project: 
+
+**NOTICE: `game/server.js` and `game/client.js` are the fixed entry points of the framework. Don't rename them!**
+
+To start a new game: 
   1. create a `game/config.js`
 
     ```
@@ -145,3 +158,32 @@ Now you can start developing
     ```
 
   3. reload `localhost:8080` and **goto 2.**
+
+### Code Structure
+  * `client/`
+    * `public/` - the folder which is served with the httpserve-container
+      * `index.html` - empty html which just inserts the generated 
+      * `bundle.js`
+    * `src/`
+      * `client.js` - handles the Client-Server communication
+        * sends cmds to the server
+        * updates client state with received state
+      * `webrtc.js` - connects to the server's WebSocket and establishes the WebRTC connection
+    * `package.json` - defines the client dependencies
+    * `httpserve.dock` - the docker image for the static http server (serves `public/`)
+    * `webpack.dock` - the docker image for continuous development (generates `public/bundle.js` from `src/` and `shared/`)
+  * `server/`
+    * `src/`
+      * `server.js` - uses a [WebSocket](https://www.npmjs.com/package/ws) for WebRTC signalling
+      * `gameserver.js` - handles the Client-Server communication: 
+        * manages player-ids
+        * translates commands to events
+        * broadcasts new state
+    * `package.json` - defines the server dependencies
+    * `restart.sh` - handy utility to restart the server if changes were made
+    * `webrtc.dock` - the docker image for a gameserver
+  * `game/` - contains the actual game code: logic, renderer, input
+  * `shared/` - contains code for `client` and `server`
+    * `byteencoder` - handles conversion between objects and bytebuffer
+    * `statemanager` - handles conversion between game state and bytebuffer, manages entity ids
+  * `docker-compose.yml` - configures the docker containers, copies the `shared/` and `game/` folder into `client/` and `server/`
