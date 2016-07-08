@@ -3,7 +3,7 @@ var dir_js = path.resolve(__dirname, 'src');
 var dir_build = path.resolve(__dirname, 'public');
 
 module.exports = {
-    entry: "./src/index.js",
+    entry: "./src/game/client.js",
     output: {
         filename: "public/bundle.js"
     },

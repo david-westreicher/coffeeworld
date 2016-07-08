@@ -6,13 +6,16 @@ import StateManager from './shared/statemanager'
 class Game{
     constructor(network){
         this.playerid = -1
-        this.webrtc = new WebRTC(Config.server_ip, this.ondata.bind(this))
-        this.webrtc.connect()
         this.command = network.get_command()
         this.command.playerid = 0 // we have to send the playerid too
         this.command_encoder = new ByteEncoder(this.command)
         this.statemanager = new StateManager(network)
         setInterval(this.send_cmd_to_server.bind(this),1000/Config.client_tickrate)
+    }
+
+    connect(){
+        this.webrtc = new WebRTC(Config.server_ip, this.ondata.bind(this))
+        this.webrtc.connect()
     }
 
     ondata(data){
@@ -34,10 +37,13 @@ class Game{
         this.webrtc.send(bytes)
     }
 
-    tick(){
-        this.real_tick(this.statemanager.state)
+    on_new_frame(fun){
+        const main = () => {
+            window.requestAnimationFrame(main)
+            fun()
+        }
+        main()
     }
-
 }
 
 export default Game
