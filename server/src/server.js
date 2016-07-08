@@ -6,7 +6,7 @@ const Peer = require('simple-peer')
 const wrtc = require('wrtc')
 const WebSocketServer = require('ws').Server
 
-const GameServer = require('./shared/gameserver.js')
+const GameServer = require('./game/server.js')
 const gameserver = new GameServer()
 
 const wss = new WebSocketServer({ port: PORT })

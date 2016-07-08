@@ -1,7 +1,7 @@
 import WebRTC from './webrtc'
-import Config from './shared/config'
-import ByteEncoder from './shared/lib/byteencoder'
-import StateManager from './shared/lib/statemanager'
+import Config from './game/config'
+import ByteEncoder from './shared/byteencoder'
+import StateManager from './shared/statemanager'
 
 class Game{
     constructor(network){

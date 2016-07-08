@@ -1,4 +1,4 @@
-import GameClient from './shared/gameclient'
+import GameClient from './game/client'
 
 (() =>{
     const game = new GameClient()

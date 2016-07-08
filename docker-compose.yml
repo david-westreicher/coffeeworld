@@ -21,6 +21,7 @@ services:
     volumes:
       - ./client:/app
       - ./shared:/app/src/shared
+      - ./game:/app/src/game
       - /app/node_modules
   webrtc:
     build:
@@ -33,4 +34,5 @@ services:
     volumes:
       - ./server:/app
       - ./shared:/app/src/shared
+      - ./game:/app/src/game
       - /app/node_modules

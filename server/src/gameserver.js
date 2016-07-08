@@ -1,7 +1,7 @@
 'use strict'
-const Config = require('./shared/config')
-const ByteEncoder = require('./shared/lib/byteencoder')
-const StateManager = require('./shared/lib/statemanager')
+const Config = require('./game/config')
+const ByteEncoder = require('./shared/byteencoder')
+const StateManager = require('./shared/statemanager')
 const TICK_RATE = 1000.0/Config.server_tickrate
 
 class GameServer{
