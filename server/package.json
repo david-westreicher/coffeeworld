@@ -12,6 +12,7 @@
   "dependencies": {
     "simple-peer": "^6.0.4",
     "wrtc": "0.0.60",
-    "ws": "^1.1.1"
+    "ws": "^1.1.1",
+    "gl-matrix": "^2.3.2"
   }
 }

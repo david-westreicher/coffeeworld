@@ -16,6 +16,9 @@ class Cubes extends Client{
         command.up = this.input.isdown(38)
         command.right = this.input.isdown(39)
         command.down = this.input.isdown(40)
+        command.mousedown = this.input.mousedown
+        command.mousex = this.input.mousex
+        command.mousey = this.input.mousey
     }
 
     tick(state){

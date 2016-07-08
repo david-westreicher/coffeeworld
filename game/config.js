@@ -15,6 +15,9 @@ module.exports = {
             right: false,
             up: false,
             down: false,
+            mousedown: false,
+            mousex: 0,
+            mousey: 0,
         }
     },
 }
