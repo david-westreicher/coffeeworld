@@ -12,10 +12,6 @@ const gameserver = new GameServer()
 const wss = new WebSocketServer({ port: PORT })
 console.log('Starting websocketserver on port: ' + PORT)
 
-
-const channelConfig = {
-}
-
 let glob_id = 0
 wss.on('connection', (ws) => {
     const id = glob_id++

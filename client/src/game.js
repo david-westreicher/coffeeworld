@@ -6,11 +6,7 @@ import StateManager from './shared/lib/statemanager'
 class Game{
     constructor(network){
         this.playerid = -1
-        //TODO remove empty callback from webrtc
-        this.webrtc = new WebRTC(Config.server_ip,
-            () => {},
-            this.ondata.bind(this)
-        )
+        this.webrtc = new WebRTC(Config.server_ip, this.ondata.bind(this))
         this.webrtc.connect()
         this.command = network.get_command()
         this.command.playerid = 0 // we have to send the playerid too
