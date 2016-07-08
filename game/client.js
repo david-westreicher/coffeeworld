@@ -1,11 +1,11 @@
 import Client from '../client'
 import Input from './input'
-import Network from './network'
+import Config from './config'
 import Renderer from './renderer'
 
 class Cubes extends Client{
     constructor(){
-        super(Network)
+        super(Config)
         this.renderer = new Renderer()
         this.input = new Input()
         super.on_new_frame(this.tick.bind(this))

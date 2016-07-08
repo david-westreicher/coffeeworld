@@ -1,22 +1,21 @@
 'use strict'
-const Config = require('./game/config')
 const ByteEncoder = require('./shared/byteencoder')
 const StateManager = require('./shared/statemanager')
-const TICK_RATE = 1000.0/Config.server_tickrate
 
 class GameServer{
-    constructor(network){
-        this.peerids = new Map()
-        this.eventqueue = []
-        this.network = network
-        this.statemanager = new StateManager(network)
+    constructor(config){
         this.cmds = []
         this.cmdspointer = 0
-        this.start()
 
-        const command = network.get_command()
+        this.new_cmd = config.get_command
+        const command = this.new_cmd()
         command.playerid = 0
         this.command_encoder = new ByteEncoder(command)
+
+        this.statemanager = new StateManager(config.get_entitysnapshot)
+        this.peerids = new Map()
+        this.tick_rate = 1000.0/config.server_tickrate
+        this.start()
     }
 
     newpeer(peer){
@@ -48,12 +47,11 @@ class GameServer{
 
 
         while(this.cmds.length <= this.cmdspointer){
-            this.cmds.push(this.network.get_command())
+            this.cmds.push(this.new_cmd())
         }
         const cmd = this.cmds[this.cmdspointer++]
         this.command_encoder.set_data(data.buffer)
         this.command_encoder.update_object_from_data(cmd)
-        //console.log('got cmd', cmd)
 
         const oldid = this.peerids.get(peer)
         const newid = cmd.playerid
@@ -79,8 +77,8 @@ class GameServer{
             console.log('server already started')
             return
         }
-        console.log('Starting GameServer with TICKRATE: '+TICK_RATE)
-        this.tickinterval = setInterval(this.tick.bind(this), TICK_RATE)
+        console.log('Starting GameServer with TICKRATE: '+ this.tick_rate)
+        this.tickinterval = setInterval(this.tick.bind(this), this.tick_rate)
     }
 
     tick(){

@@ -1,9 +1,9 @@
 const GameServer = require('../gameserver')
-const Network = require('./network')
+const Config = require('./config')
 
 class CubesServer extends GameServer{
     constructor(){
-        super(Network)
+        super(Config)
         this.entityid_from_playerid = new Map()
     }
 

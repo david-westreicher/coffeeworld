@@ -2,9 +2,9 @@
 const ByteEncoder = require('./byteencoder')
 
 class StateManager{
-    constructor(network){
-        this.network = network
-        this.esnap_encoder = new ByteEncoder(network.get_entitysnapshot())
+    constructor(new_entity_func){
+        this.new_entity = new_entity_func
+        this.esnap_encoder = new ByteEncoder(this.new_entity())
         this.state = new Map()
     }
 
@@ -15,7 +15,7 @@ class StateManager{
         const num_entities = data.byteLength/bytes_per_entity
         for(let i=0;i<num_entities;i++){
             const id = this.esnap_encoder.read_int()
-            const entity = this.state.has(id)?this.state.get(id):this.network.get_entitysnapshot()
+            const entity = this.state.has(id)?this.state.get(id):this.new_entity()
             this.esnap_encoder.update_object_from_data(entity)
             newstate.set(id, entity)
         }
@@ -41,7 +41,7 @@ class StateManager{
     create_entity(){
         const id = this.newid()
         // TODO should reuse entities
-        const entity = this.network.get_entitysnapshot()
+        const entity = this.new_entity()
         this.state.set(id, entity)
         return [entity, id]
     }

@@ -1,20 +1,21 @@
 import WebRTC from './webrtc'
-import Config from './game/config'
 import ByteEncoder from './shared/byteencoder'
 import StateManager from './shared/statemanager'
 
 class Game{
-    constructor(network){
-        this.playerid = -1
-        this.command = network.get_command()
+    constructor(config){
+        this.command = config.get_command()
         this.command.playerid = 0 // we have to send the playerid too
         this.command_encoder = new ByteEncoder(this.command)
-        this.statemanager = new StateManager(network)
-        setInterval(this.send_cmd_to_server.bind(this),1000/Config.client_tickrate)
+
+        this.statemanager = new StateManager(config.get_entitysnapshot)
+        this.webrtc = new WebRTC(config.server_ip, this.ondata.bind(this))
+        this.tickrate = 1000/config.client_tickrate
+        this.playerid = -1
     }
 
     connect(){
-        this.webrtc = new WebRTC(Config.server_ip, this.ondata.bind(this))
+        setInterval(this.send_cmd_to_server.bind(this), this.tickrate)
         this.webrtc.connect()
     }
 
