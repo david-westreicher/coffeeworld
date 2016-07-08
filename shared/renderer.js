@@ -34,7 +34,7 @@ class Renderer{
     }
 
     render(state, id){
-        this.infobox.innerHTML = 'server: ' + state.get(id) + ', id: ' + id
+        this.infobox.innerHTML = 'server: ' + JSON.stringify(state.get(id)) + ', entity_id: ' + id
         this.infobox.style.background = this.getcolor(id)
 
         while(this.divs.length < state.size){
@@ -45,11 +45,11 @@ class Renderer{
             div.parentNode.removeChild(div)
         }
         let divi = 0
-        for(const [id, pos] of state){
+        for(const [id, entity] of state){
             const div = this.divs[divi]
             div.style.background = this.getcolor(id)
-            div.style.left = pos[0] + 'px'
-            div.style.top = pos[1] + 'px'
+            div.style.left = entity.x + 'px'
+            div.style.top = entity.y + 'px'
             divi++
         }
     }

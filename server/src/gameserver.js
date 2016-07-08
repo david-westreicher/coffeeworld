@@ -1,28 +1,38 @@
 'use strict'
 const Config = require('./shared/config')
+const ByteEncoder = require('./shared/lib/byteencoder')
+const StateManager = require('./shared/lib/statemanager')
 const TICK_RATE = 1000.0/Config.server_tickrate
 
 class GameServer{
-    constructor(){
+    constructor(network){
         this.peerids = new Map()
         this.eventqueue = []
-        this.state = new Map()
+        this.network = network
+        this.statemanager = new StateManager(network)
+        this.cmds = []
+        this.cmdspointer = 0
         this.start()
+
+        const command = network.get_command()
+        command.playerid = 0
+        this.command_encoder = new ByteEncoder(command)
     }
 
     newpeer(peer){
         console.log('newpeer')
-        const id = this.newid()
-        this.peerids.set(peer, id)
-        this.new_player(id)
+        const playerid = this.new_playerid()
+        this.peerids.set(peer, playerid)
+        this.new_player(playerid)
+        console.log('new player with id: ' + playerid)
 
         // send id to client
-        const messagebuf = new Int32Array(1)
-        messagebuf[0] = id
+        const messagebuf = new Int16Array(1)
+        messagebuf[0] = playerid
         peer.send(messagebuf)
     }
 
-    newid(){
+    new_playerid(){
         let id = Math.floor(Math.random()*1000)
         while(Array.from(this.peerids.values()).includes(id)){
             id = Math.floor(Math.random()*1000)
@@ -31,24 +41,35 @@ class GameServer{
     }
 
     newdata(data, peer){
-        const newid = data.readInt16LE(0)
-        const evnt = this.event_from_netcmd(data.slice(2))
-        evnt.id = newid
-        const oldid = this.peerids.get(peer)
-        if(oldid != evnt.id){
-            throw 'oldid!=evnt.id: ', oldid, evnt.id
+        // TODO this is not thread safe => problem?
+        if(this.newdataenter)
+            throw 'THREAD EXCEPTION'
+        this.newdataenter = true
+
+
+        while(this.cmds.length <= this.cmdspointer){
+            this.cmds.push(this.network.get_command())
         }
-        this.peerids.set(peer, evnt.id)
-        this.eventqueue.push(evnt)
+        const cmd = this.cmds[this.cmdspointer++]
+        this.command_encoder.set_data(data.buffer)
+        this.command_encoder.update_object_from_data(cmd)
+        //console.log('got cmd', cmd)
+
+        const oldid = this.peerids.get(peer)
+        const newid = cmd.playerid
+        if(oldid != newid){
+            console.log(oldid, newid)
+            // TODO is this a hacking attempt?
+            throw 'oldid!=evnt.id: ', oldid, newid
+        }
+
+        this.newdataenter = false
     }
 
     deletepeer(peer){
-        const id = this.peerids.get(peer)
-        console.log('deletepeer', id)
-        this.eventqueue.push({
-            type: 'delete',
-            id: id
-        })
+        const playerid = this.peerids.get(peer)
+        console.log('deletepeer', playerid)
+        this.player_left(playerid)
         this.peerids.delete(peer)
     }
 
@@ -63,30 +84,11 @@ class GameServer{
     }
 
     tick(){
-        // simulate received commands
-        const queuesize = this.eventqueue.length
-        const deleted = []
-        const evnt_queue = []
-        for(let i=0; i<queuesize; i++){
-            let evnt = this.eventqueue.shift()
-            if(evnt.type == 'delete'){
-                this.state.delete(evnt.id)
-                deleted.push(evnt.id)
-            }else{
-                if(!deleted.includes(evnt.id))
-                    evnt_queue.push(evnt)
-            }
-        }
-        this.real_tick(evnt_queue)
+        this.real_tick(this.statemanager.state, this.cmds.slice(0,this.cmdspointer))
+        this.cmdspointer = 0
 
-        for(const [peer, id] of this.peerids){
-            const netstate = []
-            for(const [id, entity_state] of this.state){
-                netstate.push(id)
-                this.data_from_entity_state(netstate, entity_state)
-            }
-            const messagebuf = new Int16Array(netstate)
-            peer.send(messagebuf)
+        for(const [peer, playerid] of this.peerids){
+            peer.send(this.statemanager.get_snapshot())
         }
     }
 

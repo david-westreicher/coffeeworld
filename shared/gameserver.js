@@ -1,43 +1,34 @@
 const GameServer = require('../gameserver')
+const Network = require('./network')
 
 class CubesServer extends GameServer{
-
-    new_player(id){
-        this.state.set(id, [200,200])
+    constructor(){
+        super(Network)
+        this.entityid_from_playerid = new Map()
     }
 
-    data_from_entity_state(netstate, pos){
-        netstate.push(pos[0])
-        netstate.push(pos[1])
+    new_player(playerid){
+        const [entity, id] = this.statemanager.create_entity()
+        entity.playerid = playerid
+        console.log('new entity ', entity)
+        this.entityid_from_playerid.set(playerid, id)
     }
 
-    event_from_netcmd(data){
-        const cmd = data.readInt16LE(0)
-        let x = 0
-        let y = 0
-        if(cmd & (1<<0))
-            x -= 1
-        if(cmd & (1<<1))
-            y -= 1
-        if(cmd & (1<<2))
-            x += 1
-        if(cmd & (1<<3))
-            y += 1
-        const evnt = {
-            x: x,
-            y: y,
-            type: 'normal'
-        }
-        return evnt
+    player_left(playerid){
+        const entityid = this.entityid_from_playerid.get(playerid)
+        this.statemanager.delete_entity(entityid)
     }
 
-    real_tick(evnts){
-        for(const evnt of evnts){
-            if(!this.state.has(evnt.id))
-                continue
-            const pos = this.state.get(evnt.id)
-            pos[0] += evnt.x
-            pos[1] += evnt.y
+    real_tick(state, cmds){
+        for(const cmd of cmds){
+            const entity = state.get(this.entityid_from_playerid.get(cmd.playerid))
+            const dir = [0,0]
+            dir[0]+=cmd.right?1:0
+            dir[0]-=cmd.left?1:0
+            dir[1]+=cmd.down?1:0
+            dir[1]-=cmd.up?1:0
+            entity.x += dir[0]
+            entity.y += dir[1]
         }
     }
 

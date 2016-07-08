@@ -53,14 +53,9 @@ class WebRTC {
         }
     }
 
-    send(id, cmds){
-        const arrbuff = new Int16Array(1+cmds.length)
-        arrbuff[0] = id
-        for(let index=0;index<cmds.length;index++){
-            arrbuff[index+1] = cmds[index]
-        }
+    send(buffer){
         if(this.peer.connected)
-            this.peer.send(arrbuff)
+            this.peer.send(buffer)
     }
 }
 

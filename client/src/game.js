@@ -1,49 +1,45 @@
 import WebRTC from './webrtc'
-import Input from './input'
+import Config from './shared/config'
+import ByteEncoder from './shared/lib/byteencoder'
+import StateManager from './shared/lib/statemanager'
 
 class Game{
-    constructor(server){
-        this.id = -1
-        this.input = new Input()
+    constructor(network){
+        this.playerid = -1
         //TODO remove empty callback from webrtc
-        this.webrtc = new WebRTC(server,
+        this.webrtc = new WebRTC(Config.server_ip,
             () => {},
             this.ondata.bind(this)
         )
         this.webrtc.connect()
-        this.state = new Map()
+        this.command = network.get_command()
+        this.command.playerid = 0 // we have to send the playerid too
+        this.command_encoder = new ByteEncoder(this.command)
+        this.statemanager = new StateManager(network)
+        setInterval(this.send_cmd_to_server.bind(this),1000/Config.client_tickrate)
     }
 
     ondata(data){
-        if(this.id==-1){
-            this.id = data.readInt32LE(0)
-            console.log('id: ', this.id)
+        if(this.playerid==-1){
+            this.playerid = data.readInt16LE(0)
+            console.log('playerid: ', this.playerid)
             return
         }
-
-        const intsperentity = 1 + this.intsperentity()
-        const bytes_per_int = 2
-        const players = (data.length/intsperentity)/bytes_per_int
-        const newstate = new Map()
-        for(let i=0; i<players; i++){
-            const offset = i*intsperentity*bytes_per_int
-            const id = data.readInt16LE(offset + 0*bytes_per_int)
-            const entity_state_data = data.slice(offset + 1*bytes_per_int, offset + intsperentity*bytes_per_int)
-            newstate.set(id, this.entity_state_from_data(entity_state_data))
-        }
-        this.state = newstate
+        this.statemanager.update_state(data.buffer)
     }
 
-    send_cmds_to_server(){
-        if(this.id==-1)
+    send_cmd_to_server(){
+        if(this.playerid==-1)
             return
-        const cmds = this.netcmd_from_input(this.input)
-        this.webrtc.send(this.id, cmds)
+        this.update_command(this.command)
+        this.command.playerid = this.playerid
+        this.command_encoder.set_data()
+        const bytes = this.command_encoder.bytes_from_object(this.command)
+        this.webrtc.send(bytes)
     }
 
     tick(){
-        this.send_cmds_to_server()
-        this.real_tick()
+        this.real_tick(this.statemanager.state)
     }
 
 }

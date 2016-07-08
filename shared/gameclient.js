@@ -1,39 +1,31 @@
 import Game from '../game'
+import Input from './input'
+import Network from './network'
 import Renderer from './renderer'
 
 class Cubes extends Game{
-    constructor(server){
-        super(server)
+    constructor(){
+        super(Network)
         this.renderer = new Renderer()
+        this.input = new Input()
     }
 
-    netcmd_from_input(input){
-        let netcmd = 0
-        if(input.isdown(37)) // left
-            netcmd = netcmd | (1<<0)
-        if(input.isdown(38)) // up
-            netcmd = netcmd | (1<<1)
-        if(input.isdown(39)) // right
-            netcmd = netcmd | (1<<2)
-        if(input.isdown(40)) // down
-            netcmd = netcmd | (1<<3)
-        return [netcmd]
+    update_command(command){
+        command.left = this.input.isdown(37)
+        command.up = this.input.isdown(38)
+        command.right = this.input.isdown(39)
+        command.down = this.input.isdown(40)
     }
 
-
-    intsperentity(){
-        return 2
-    }
-
-    entity_state_from_data(data){
-        const pos = [0,0]
-        pos[0] = data.readInt16LE(0)
-        pos[1] = data.readInt16LE(2)
-        return pos
-    }
-
-    real_tick(){
-        this.renderer.render(this.state, this.id)
+    real_tick(state){
+        let player_entity = -1
+        for(const [id, entity] of state){
+            if(entity.playerid == this.playerid){
+                player_entity = id
+            }
+        }
+        if(player_entity != -1)
+            this.renderer.render(state, player_entity)
     }
 
 }
