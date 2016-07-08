@@ -1,7 +1,7 @@
 import Client from '../client'
-import Input from './input'
 import Config from './config'
-import Renderer from './renderer'
+import Input from './client/input'
+import Renderer from './client/renderer'
 
 class Cubes extends Client{
     constructor(){
