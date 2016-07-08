@@ -76,6 +76,11 @@ class ByteEncoder{
         this.currentbyte = 0
     }
 
+    set_data_view(view, currentbyte = 0){
+        this.dataview = view
+        this.currentbyte = currentbyte
+    }
+
     bytes_per_entity(){
         return this.propertycache.size
     }

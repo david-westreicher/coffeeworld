@@ -2,7 +2,8 @@ import rand from 'random-seed'
 
 class Renderer{
     constructor(){
-        this.divs = []
+        this.player_divs = []
+        this.bullet_divs = []
         this.colors = new Map()
         this.infobox = document.createElement('div')
         document.body.appendChild(this.infobox)
@@ -23,31 +24,57 @@ class Renderer{
         return color
     }
 
-    newdiv(){
+    new_player_div(){
         let div = document.createElement('div')
         div.style.position = 'absolute'
         div.style.width = '10px'
         div.style.height = '10px'
         div.style.background = '#00ff00'
         document.body.appendChild(div)
-        this.divs.push(div)
+        this.player_divs.push(div)
     }
 
-    render(state, id){
-        this.infobox.innerHTML = 'server: ' + JSON.stringify(state.get(id)) + ', entity_id: ' + id
+    new_bullet_div(){
+        let div = document.createElement('div')
+        div.style.position = 'absolute'
+        div.style.width = '2px'
+        div.style.height = '2px'
+        div.style.background = '#000000'
+        document.body.appendChild(div)
+        this.bullet_divs.push(div)
+    }
+
+    render(players, id, bullets){
+        this.infobox.innerHTML = ', entity_id: ' + id
         this.infobox.style.background = this.getcolor(id)
 
-        while(this.divs.length < state.size){
-            this.newdiv()
+        while(this.player_divs.length < players.size){
+            this.new_player_div()
         }
-        while(this.divs.length > state.size){
-            const div = this.divs.pop()
+        while(this.player_divs.length > players.size){
+            const div = this.player_divs.pop()
             div.parentNode.removeChild(div)
         }
         let divi = 0
-        for(const [id, entity] of state){
-            const div = this.divs[divi]
+        for(const [id, entity] of players){
+            const div = this.player_divs[divi]
             div.style.background = this.getcolor(id)
+            div.style.left = entity.x + 'px'
+            div.style.top = entity.y + 'px'
+            divi++
+        }
+
+        while(this.bullet_divs.length < bullets.size){
+            this.new_bullet_div()
+        }
+        while(this.bullet_divs.length > bullets.size){
+            const div = this.bullet_divs.pop()
+            div.parentNode.removeChild(div)
+        }
+
+        divi = 0
+        for(const [_, entity] of bullets){
+            const div = this.bullet_divs[divi]
             div.style.left = entity.x + 'px'
             div.style.top = entity.y + 'px'
             divi++

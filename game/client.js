@@ -23,12 +23,12 @@ class Cubes extends Client{
 
     tick(state){
         let player_entity = -1
-        for(const [id, entity] of state){
+        for(const [id, entity] of state.get('player')){
             if(entity.playerid == this.playerid){
                 player_entity = id
             }
         }
-        this.renderer.render(state, player_entity)
+        this.renderer.render(state.get('player'), player_entity, state.get('bullet'))
     }
 }
 
