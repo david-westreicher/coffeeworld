@@ -85,14 +85,36 @@ class ByteEncoder{
         return this.propertycache.size
     }
 
+    write_uint8(val){
+        this.dataview.setUint8(this.currentbyte, val, true)
+        this.currentbyte += Uint8Array.BYTES_PER_ELEMENT
+    }
+
+    write_uint16(val){
+        this.dataview.setUint16(this.currentbyte, val, true)
+        this.currentbyte += Uint16Array.BYTES_PER_ELEMENT
+    }
+
     write_int(val){
         this.dataview.setInt16(this.currentbyte, val, true)
-        this.currentbyte += Int16Array.BYTES_PER_ELEMENT 
+        this.currentbyte += Int16Array.BYTES_PER_ELEMENT
+    }
+
+    read_uint8(){
+        const integ = this.dataview.getUint8(this.currentbyte, true)
+        this.currentbyte += Uint8Array.BYTES_PER_ELEMENT
+        return integ
+    }
+
+    read_uint16(){
+        const integ = this.dataview.getUint16(this.currentbyte, true)
+        this.currentbyte += Uint16Array.BYTES_PER_ELEMENT
+        return integ
     }
 
     read_int(){
         const integ = this.dataview.getInt16(this.currentbyte, true)
-        this.currentbyte += Int16Array.BYTES_PER_ELEMENT 
+        this.currentbyte += Int16Array.BYTES_PER_ELEMENT
         return integ
     }
 
