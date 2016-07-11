@@ -8,7 +8,7 @@ class Game{
         this.command.playerid = 0 // we have to send the playerid too
         this.command_encoder = new ByteEncoder(this.command)
 
-        this.statemanager = new StateManager(config.get_entitysnapshot)
+        this.statemanager = new StateManager(config.get_entities)
         this.webrtc = new WebRTC(config.server_ip, this.ondata.bind(this))
         this.tickrate = 1000/config.client_tickrate
         this.playerid = -1
@@ -39,9 +39,9 @@ class Game{
     }
 
     on_new_frame(fun){
-        const main = () => {
+        const main = (event) => {
             window.requestAnimationFrame(main)
-            fun(this.statemanager.state)
+            fun(this.statemanager.state, event)
         }
         main()
     }

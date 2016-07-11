@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "simple-peer": "^6.0.4",
-    "random-seed": "^0.3.0"
+    "random-seed": "^0.3.0",
+    "three": "^0.78.0"
   },
   "devDependencies": {
     "babel-core": "^6.10.4",

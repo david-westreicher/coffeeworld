@@ -12,7 +12,7 @@ class GameServer{
         command.playerid = 0
         this.command_encoder = new ByteEncoder(command)
 
-        this.statemanager = new StateManager(config.get_entitysnapshot)
+        this.statemanager = new StateManager(config.get_entities)
         this.peerids = new Map()
         this.tick_rate = 1000.0/config.server_tickrate
         this.start()

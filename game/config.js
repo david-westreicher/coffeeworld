@@ -1,8 +1,8 @@
 module.exports = {
     client_tickrate: 33,
     server_tickrate: 33,
-    server_ip: 'ws://10.0.0.76:9000',
-    get_entitysnapshot:{
+    server_ip: 'ws://localhost:9000',
+    get_entities:{
         player: () => {
             return {
                 x: 200.1,
