@@ -44,18 +44,26 @@ class PropertyCache{
 class ByteEncoder{
     constructor(object){
         this.propertycache = new PropertyCache(object)
-        this.dataview = new DataView(new ArrayBuffer(this.propertycache.size))
     }
 
-    bytes_from_object(object){
+    set_buffer(buf){
+        this.buf = buf
+        this.offset = 0
+    }
+
+    set_offset(offset){
+        this.offset = offset
+    }
+
+    write(object){
         for(const property of this.propertycache.floats){
-            this.dataview.setFloat32(this.currentbyte, object[property], true)
-            this.currentbyte += Float32Array.BYTES_PER_ELEMENT 
+            this.buf.writeFloatLE(object[property], this.offset, true)
+            this.offset += Float32Array.BYTES_PER_ELEMENT
         }
 
         for(const property of this.propertycache.ints){
-            this.dataview.setInt16(this.currentbyte, object[property], true)
-            this.currentbyte += Int16Array.BYTES_PER_ELEMENT 
+            this.buf.writeInt16LE(object[property], this.offset, true)
+            this.offset += Int16Array.BYTES_PER_ELEMENT
         }
 
         for(const boolarray of this.propertycache.bools){
@@ -64,80 +72,35 @@ class ByteEncoder{
                 if(object[property])
                     num = num | (1 << bitindex)
             }
-            this.dataview.setUint8(this.currentbyte, num, true)
-            this.currentbyte += Uint8Array.BYTES_PER_ELEMENT 
+            this.buf.writeUInt8(num, this.offset, true)
+            this.offset += Uint8Array.BYTES_PER_ELEMENT
+        }
+    }
+
+    read(object){
+        for(const property of this.propertycache.floats){
+            object[property] = this.buf.readFloatLE(this.offset, true)
+            this.offset += Float32Array.BYTES_PER_ELEMENT
         }
 
-        return this.dataview.buffer
-    }
+        for(const property of this.propertycache.ints){
+            object[property] = this.buf.readInt16LE(this.offset, true)
+            this.offset += Int16Array.BYTES_PER_ELEMENT
+        }
 
-    set_data(data){
-        this.dataview = (!data)?this.dataview:new DataView(data)
-        this.currentbyte = 0
-    }
+        for(const boolarray of this.propertycache.bools){
+            let num = this.buf.readUInt8(this.offset,true)
+            for(const [property, bitindex] of boolarray){
+                object[property] = ((num & (1 << bitindex)) > 0)
+            }
+            this.offset += Uint8Array.BYTES_PER_ELEMENT
+        }
 
-    set_data_view(view, currentbyte = 0){
-        this.dataview = view
-        this.currentbyte = currentbyte
+        return object
     }
 
     bytes_per_entity(){
         return this.propertycache.size
-    }
-
-    write_uint8(val){
-        this.dataview.setUint8(this.currentbyte, val, true)
-        this.currentbyte += Uint8Array.BYTES_PER_ELEMENT
-    }
-
-    write_uint16(val){
-        this.dataview.setUint16(this.currentbyte, val, true)
-        this.currentbyte += Uint16Array.BYTES_PER_ELEMENT
-    }
-
-    write_int(val){
-        this.dataview.setInt16(this.currentbyte, val, true)
-        this.currentbyte += Int16Array.BYTES_PER_ELEMENT
-    }
-
-    read_uint8(){
-        const integ = this.dataview.getUint8(this.currentbyte, true)
-        this.currentbyte += Uint8Array.BYTES_PER_ELEMENT
-        return integ
-    }
-
-    read_uint16(){
-        const integ = this.dataview.getUint16(this.currentbyte, true)
-        this.currentbyte += Uint16Array.BYTES_PER_ELEMENT
-        return integ
-    }
-
-    read_int(){
-        const integ = this.dataview.getInt16(this.currentbyte, true)
-        this.currentbyte += Int16Array.BYTES_PER_ELEMENT
-        return integ
-    }
-
-    update_object_from_data(object){
-        for(const property of this.propertycache.floats){
-            object[property] = this.dataview.getFloat32(this.currentbyte, true)
-            this.currentbyte += Float32Array.BYTES_PER_ELEMENT 
-        }
-
-        for(const property of this.propertycache.ints){
-            object[property] = this.dataview.getInt16(this.currentbyte, true)
-            this.currentbyte += Int16Array.BYTES_PER_ELEMENT 
-        }
-
-        for(const boolarray of this.propertycache.bools){
-            let num = this.dataview.getUint8(this.currentbyte,true)
-            for(const [property, bitindex] of boolarray){
-                object[property] = ((num & (1 << bitindex)) > 0)
-            }
-            this.currentbyte += Uint8Array.BYTES_PER_ELEMENT 
-        }
-
-        return object
     }
 }
 
