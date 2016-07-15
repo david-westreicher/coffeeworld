@@ -1,41 +1,49 @@
+import Server from './game/server'
 import WebRTC from './webrtc'
-import ByteEncoder from './shared/byteencoder'
+import AccurateTimer from './shared/util'
+import NetworkLayer from './shared/networklayer'
 import StateManager from './shared/statemanager'
 
 class Game{
     constructor(config){
-        this.command = config.get_command()
-        this.command.playerid = 0 // we have to send the playerid too
-        this.command_encoder = new ByteEncoder(this.command)
-
         this.statemanager = new StateManager(config.get_entities)
-        this.webrtc = new WebRTC(config.server_ip, this.ondata.bind(this))
-        this.tickrate = 1000/config.client_tickrate
-        this.playerid = -1
-    }
-
-    connect(){
-        setInterval(this.send_cmd_to_server.bind(this), this.tickrate)
-        this.webrtc.connect()
-    }
-
-    ondata(data){
-        if(this.playerid==-1){
-            this.playerid = data.readInt16LE(0)
-            console.log('playerid: ', this.playerid)
-            return
+        this.command = config.get_command()
+        this.network = NetworkLayer.createClient(this.statemanager, this.command, config.get_entities)
+        if(config.local_play){
+            const serverrate = 1000/config.server_tickrate
+            this.start_local_server(serverrate)
+        }else{
+            const tickrate = 1000/config.client_tickrate
+            this.connect_dedicated(config.server_ip,tickrate)
         }
-        this.statemanager.update_state(data.buffer)
+    }
+
+    start_local_server(tickrate){
+        this.server = new Server()
+        this.server.statemanager = this.statemanager
+        this.server.new_player(123)
+        this.playerid = 123
+        this.command.playerid=123
+        const timer = new AccurateTimer(()=>{
+            this.update_command(this.command)
+            this.server.tick(this.statemanager.state, [this.command])
+        }, tickrate)
+        timer.start()
+    }
+
+    connect_dedicated(ip,tickrate){
+        this.webrtc = new WebRTC(ip)
+        this.network.on_playerid = (playerid)=>{
+            this.playerid = playerid
+        }
+        this.network.connect(this.webrtc)
+        const timer = new AccurateTimer(this.send_cmd_to_server.bind(this),tickrate)
+        timer.start()
     }
 
     send_cmd_to_server(){
-        if(this.playerid==-1)
-            return
         this.update_command(this.command)
-        this.command.playerid = this.playerid
-        this.command_encoder.set_data()
-        const bytes = this.command_encoder.bytes_from_object(this.command)
-        this.webrtc.send(bytes)
+        this.network.send_cmd(this.command)
     }
 
     on_new_frame(fun){

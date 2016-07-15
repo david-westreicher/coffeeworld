@@ -2,9 +2,9 @@ import Peer from 'simple-peer'
 
 
 class WebRTC {
-    constructor(ws, data_cbk){
+    constructor(ws){
         this.ws = ws
-        this.data_cbk = data_cbk
+        this.data_cbk = ()=>{}
     }
 
     connect(){
@@ -51,8 +51,12 @@ class WebRTC {
         }
     }
 
+    ondata(data_cbk){
+        this.data_cbk = data_cbk
+    }
+
     send(buffer){
-        if(this.peer.connected)
+        if(this.peer && this.peer.connected)
             this.peer.send(buffer)
     }
 }
