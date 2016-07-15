@@ -1,18 +1,34 @@
-const GameServer = require('../gameserver')
-const Config = require('./config')
+const Level = require('./level')
 const vec2 = require('gl-matrix').vec2
 
-class CubesServer extends GameServer{
+const PLAYER_SIZE = 10
+const HOOK_SPEED = 8
+const HOOK_MAX_LENGTH = 800
+
+//TODO rename file into GameLogic
+class GameLogic{
     constructor(){
-        super(Config)
         this.entityid_from_playerid = new Map()
+        this.level = new Level()
     }
 
     new_player(playerid){
-        const [id, entity] = this.statemanager.create_entity('player')
-        entity.playerid = playerid
-        console.log('new player ', entity)
+        const [id, player] = this.statemanager.create_entity('player')
+        player.playerid = playerid
+        this.init_player(player)
         this.entityid_from_playerid.set(playerid, id)
+        console.log('new player ', player)
+    }
+
+    init_player(player){
+        player.x = 0
+        player.y = 0
+        player.hookx = 0
+        player.hooky = 0
+        player.hook_pos = vec2.fromValues(0.0,0.0)
+        player.hook_length = 0
+        player.pos = vec2.fromValues(0.0,0.0)
+        player.lastpos = vec2.fromValues(0.0,0.0)
     }
 
     player_left(playerid){
@@ -22,38 +38,80 @@ class CubesServer extends GameServer{
 
     tick(state, cmds){
         for(const cmd of cmds){
-            const entity = state.get('player').get(this.entityid_from_playerid.get(cmd.playerid))
-            //if(!entity)
-                //continue
-            const dir = [0,0]
-            dir[0]+=cmd.right?1:0
-            dir[0]-=cmd.left?1:0
-            dir[1]+=cmd.down?1:0
-            dir[1]-=cmd.up?1:0
-            entity.x += dir[0]*10
-            entity.y += dir[1]*10
-            if(cmd.mousedown){
-                const [id, bullet] = this.statemanager.create_entity('bullet')
-                bullet.x = entity.x
-                bullet.y = entity.y
-                // console.log('setting speed')
-                bullet.speed = vec2.fromValues(cmd.mousex-bullet.x, cmd.mousey-bullet.y)
-                vec2.normalize(bullet.speed, bullet.speed)
-                vec2.scale(bullet.speed, bullet.speed, 20.0)
-                bullet.id = id
+            const player = state.get('player').get(this.entityid_from_playerid.get(cmd.playerid))
+            if(!player)
+                continue
+            if(cmd.up)
+                this.init_player(player)
+            if(player.hook_length==0 && cmd.mousedown){
+                const collpos = this.level.raycast(player.pos, vec2.fromValues(cmd.mousex, cmd.mousey))
+                vec2.copy(player.hook_pos, collpos)
+                player.hook_length = vec2.distance(player.hook_pos,player.pos)
             }
+            if(player.hook_length!=0){
+                if(cmd.left)
+                    player.hook_length = Math.max(80, player.hook_length-HOOK_SPEED)
+                if(cmd.right)
+                    player.hook_length = Math.min(HOOK_MAX_LENGTH, player.hook_length+HOOK_SPEED)
+            }
+            if(!cmd.mousedown || player.hook_length>HOOK_MAX_LENGTH)
+                player.hook_length = 0
         }
-        for(const [id, bullet] of state.get('bullet')){
-            // console.log('bullet', bullet)
-            bullet.speed[1] += 1
-            bullet.x += bullet.speed[0]
-            bullet.y += bullet.speed[1]
-            if(bullet.y>400 || bullet.x>400 || bullet.y<0 || bullet.x<0){
-                this.statemanager.delete_entity(id)
+
+        const players = Array.from(state.get('player').values())
+        this.physic_statisfy_constraints(players)
+        this.physic_verlet_integration(players)
+        this.physic_world_collision(players)
+        this.physic_serialize(players)
+    }
+
+    physic_statisfy_constraints(players){
+        const diff = vec2.fromValues(0.0,0.0)
+        const translate = vec2.fromValues(0.0,0.0)
+        for(let player of players){
+            const linkdist = player.hook_length
+            if(player.hook_length == 0){
+                vec2.copy(player.hook_pos, player.pos)
+                continue
             }
+            vec2.sub(diff, player.pos, player.hook_pos)
+            const d = vec2.length(diff)
+            if(d<linkdist)
+                continue
+            const difference = (linkdist-d)/d
+            vec2.scale(translate, diff, difference)
+            vec2.add(player.pos, player.pos, translate)
+        }
+    }
+
+    physic_verlet_integration(players){
+        const velocity = vec2.fromValues(0.0,0.0)
+        const nextpos = vec2.fromValues(0.0,0.0)
+        const accel = vec2.fromValues(0.0,1.0)
+        for(let player of players){
+            vec2.sub(velocity, player.pos, player.lastpos)
+            vec2.add(nextpos, player.pos, velocity)
+            vec2.scaleAndAdd(nextpos, nextpos, accel, 0.5)
+            vec2.copy(player.lastpos, player.pos)
+            vec2.copy(player.pos, nextpos)
+        }
+    }
+
+    physic_world_collision(players){
+        for(let player of players){
+            this.level.collide(player, PLAYER_SIZE)
+        }
+    }
+
+    physic_serialize(players){
+        for(let player of players){
+            player.x = player.pos[0]
+            player.y = player.pos[1]
+            player.hookx = player.hook_pos[0]
+            player.hooky = player.hook_pos[1]
         }
     }
 
 }
 
-module.exports = CubesServer
+module.exports = GameLogic
