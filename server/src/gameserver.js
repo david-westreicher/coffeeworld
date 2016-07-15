@@ -1,6 +1,7 @@
 'use strict'
 const StateManager = require('./shared/statemanager')
 const NetworkLayer = require('./shared/networklayer')
+const AccurateTimer = require('./shared/util')
 
 class GameServer{
     constructor(config, gamelogic){
@@ -22,13 +23,6 @@ class GameServer{
         this.gamelogic.new_player(playerid)
         this.peers_without_ids.add(peer)
         console.log('new player with id: ' + playerid)
-
-        /*
-        // send id to client
-        const messagebuf = new Int16Array(1)
-        messagebuf[0] = playerid
-        peer.send(messagebuf)
-        */
     }
 
     new_playerid(){
@@ -54,30 +48,6 @@ class GameServer{
 
     newdata(data, peer){
         this.network.on_server_data(data, peer)
-        /*
-        // TODO this is not thread safe => problem?
-        if(this.newdataenter)
-            throw 'THREAD EXCEPTION'
-        this.newdataenter = true
-
-
-        while(this.cmds.length <= this.cmdspointer){
-            this.cmds.push(this.new_cmd())
-        }
-        const cmd = this.cmds[this.cmdspointer++]
-        this.command_encoder.set_data(data.buffer)
-        this.command_encoder.update_object_from_data(cmd)
-
-        const oldid = this.peerids.get(peer)
-        const newid = cmd.playerid
-        if(oldid != newid){
-            console.log(oldid, newid)
-            // TODO is this a hacking attempt?
-            throw 'oldid!=evnt.id: ', oldid, newid
-        }
-
-        this.newdataenter = false
-        */
     }
 
     deletepeer(peer){
@@ -94,7 +64,11 @@ class GameServer{
             return
         }
         console.log('Starting GameServer with TICKRATE: '+ this.tick_rate)
-        this.tickinterval = setInterval(this._tick.bind(this), this.tick_rate)
+        this.tickinterval = new AccurateTimer(this._tick.bind(this), this.tick_rate, ()=>{
+            const now = process.hrtime()
+            return now[0]*1e3 + now[1]*1e-6
+        })
+        this.tickinterval.start()
     }
 
     _tick(){

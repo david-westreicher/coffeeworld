@@ -1,7 +1,26 @@
 const Random = require('random-seed')
 const vec2 = require('gl-matrix').vec2
 
-const BOUNDS = 1000
+const MAPS = {
+    small: {
+        bounds: 1200,
+        balls: 10,
+        rects: 10,
+    },
+    big: {
+        bounds: 3000,
+        balls: 30,
+        rects: 30,
+    },
+}
+const CURR_MAP = MAPS.small
+
+const normal_from_points = (start, end)=>{
+    const normal = vec2.sub(vec2.create(), start, end)
+    vec2.set(normal, -normal[1], normal[0])
+    vec2.normalize(normal,normal)
+    return normal
+}
 
 class Line{
     constructor(start, end, isreal = true){
@@ -9,9 +28,7 @@ class Line{
         this.end = end
         this.mid = vec2.lerp(vec2.create(),start,end,0.5)
         this.length = vec2.distance(start,end)
-        this.normal = vec2.sub(vec2.create(),start,end)
-        this.normal = vec2.fromValues(-this.normal[1],this.normal[0])
-        vec2.normalize(this.normal,this.normal)
+        this.normal = normal_from_points(start,end)
         if(isreal)
             this.inner = new Line(vec2.copy(vec2.create(),this.mid), vec2.scaleAndAdd(vec2.create(),this.mid,this.normal,10),false)
     }
@@ -19,25 +36,47 @@ class Line{
 
 class Level{
     constructor(debug){
-        const seeded_rand = new Random(234735357)
+        // const seeded_rand = new Random(new Date().getMinutes())
+        const seeded_rand = new Random(123435243)
+        const bounds = CURR_MAP.bounds
         this.lines = []
-        this.addRectangle(BOUNDS, BOUNDS, -BOUNDS,-BOUNDS)
-        for(let i =0;i<10;i++){
-            const x = seeded_rand.floatBetween(-BOUNDS,BOUNDS)
-            const y = seeded_rand.floatBetween(-BOUNDS,BOUNDS) 
+        this.createBoundary(seeded_rand, bounds)
+        for(let i =0;i<CURR_MAP.balls;i++){
+            const x = seeded_rand.floatBetween(-bounds,bounds)
+            const y = seeded_rand.floatBetween(-bounds,bounds)
             const size = seeded_rand.floatBetween(100,200)
             this.addBall(x,y,size)
         }
-        for(let i =0;i<10;i++){
-            const x = seeded_rand.floatBetween(-BOUNDS,BOUNDS)
-            const y = seeded_rand.floatBetween(-BOUNDS,BOUNDS) 
+        for(let i =0;i<CURR_MAP.rects;i++){
+            const x = seeded_rand.floatBetween(-bounds,bounds)
+            const y = seeded_rand.floatBetween(-bounds,bounds)
             const width = seeded_rand.floatBetween(100,200)
             const height = seeded_rand.floatBetween(100,200)
             this.addRectangle(x-width/2,y+height/2,x+width/2,y-height/2)
         }
-        this.lines.push(new Line(vec2.fromValues(0,BOUNDS),vec2.fromValues(-BOUNDS,0) ))
-        this.lines.push(new Line(vec2.fromValues(BOUNDS,0),vec2.fromValues(BOUNDS/2,BOUNDS) ))
         this.debug = debug
+    }
+
+    createBoundary(seeded_rand, bounds){
+        this.addRectangle(bounds, bounds, -bounds,-bounds)
+        for(const side of [
+                [[-1,-1],[-1,1]], //left
+                [[1,1],[1,-1]], //right
+                [[1,-1],[-1,-1]], //top
+                [[-1,1],[1,1]], //bottom
+        ]){
+            const normal = normal_from_points(side[0], side[1])
+            let lastpos = null
+            for(let alpha=0;alpha<=1;alpha+=0.1){
+                const pos = vec2.lerp(vec2.create(), side[0], side[1], alpha)
+                vec2.scale(pos,pos,bounds)
+                vec2.scaleAndAdd(pos, pos, normal, seeded_rand.floatBetween(0,bounds/5))
+                if(lastpos){
+                    this.lines.push(new Line(pos, lastpos))
+                }
+                lastpos = pos
+            }
+        }
     }
 
     addBall(x,y,size){

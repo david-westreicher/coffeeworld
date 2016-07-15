@@ -27,7 +27,7 @@ class Game{
         const timer = new AccurateTimer(()=>{
             this.update_command(this.command)
             this.server.tick(this.statemanager.state, [this.command])
-        }, tickrate)
+        }, tickrate, window.performance.now.bind(window.performance))
         timer.start()
     }
 
@@ -37,7 +37,7 @@ class Game{
             this.playerid = playerid
         }
         this.network.connect(this.webrtc)
-        const timer = new AccurateTimer(this.send_cmd_to_server.bind(this),tickrate)
+        const timer = new AccurateTimer(this.send_cmd_to_server.bind(this),tickrate,window.performance.now.bind(window.performance))
         timer.start()
     }
 

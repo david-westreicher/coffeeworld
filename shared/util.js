@@ -1,18 +1,19 @@
 class AccurateTimer{
-    constructor(fun, time){
+    constructor(fun, time, gettime){
         this.fun = fun
         this.waittime = time
+        this.gettime = gettime
         //this.ticks = 0
-        //this.nextsecond = window.performance.now()
+        //this.nextsecond = gettime()
     }
     start(){
-        this.nexttick = window.performance.now() 
+        this.nexttick = this.gettime()
         setInterval(this.check.bind(this),1)
     }
     check(){
-        const now = window.performance.now()
+        const now = this.gettime()
         /*if(now>this.nextsecond){
-            conosole.log()
+            console.log(this.ticks)
             this.nextsecond = now + 1000
             this.ticks = 0
         }*/

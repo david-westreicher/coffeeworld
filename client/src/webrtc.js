@@ -15,7 +15,10 @@ class WebRTC {
             this.peer = new Peer({
                 initiator: false,
                 config: {
-                    'iceServers': [ {url: 'stun:stun1.l.google.com:19305'} ]
+                    'iceServers': [ {
+                        url: 'stun:stun4.l.google.com:19302',
+                        urls: 'stun:stun4.l.google.com:19302'
+                    } ]
                 },
                 trickle: false,
             })

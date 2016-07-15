@@ -21,7 +21,10 @@ wss.on('connection', (ws) => {
         initiator: true,
         wrtc: wrtc,
         config: {
-            'iceServers': [ {url: 'stun:stun1.l.google.com:19305'} ]
+            'iceServers': [ {
+                url: 'stun:stun4.l.google.com:19302',
+                urls: 'stun:stun4.l.google.com:19302'
+            }]
         },
         channelConfig: {
             ordered: false,

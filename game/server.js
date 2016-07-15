@@ -76,9 +76,7 @@ class GameLogic{
             }
             vec2.sub(diff, player.pos, player.hook_pos)
             const d = vec2.length(diff)
-            if(d<linkdist)
-                continue
-            const difference = (linkdist-d)/d
+            const difference = 0.4*(linkdist-d)/d
             vec2.scale(translate, diff, difference)
             vec2.add(player.pos, player.pos, translate)
         }
