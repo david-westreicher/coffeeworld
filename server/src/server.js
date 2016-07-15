@@ -24,7 +24,7 @@ wss.on('connection', (ws) => {
             'iceServers': [ {url: 'stun:stun1.l.google.com:19305'} ]
         },
         channelConfig: {
-            ordererd: false,
+            ordered: false,
             maxRetransmits: 0
         },
         trickle: false,
