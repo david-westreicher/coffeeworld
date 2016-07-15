@@ -6,8 +6,10 @@ const Peer = require('simple-peer')
 const wrtc = require('wrtc')
 const WebSocketServer = require('ws').Server
 
-const GameServer = require('./game/server.js')
-const gameserver = new GameServer()
+const GameServer = require('./gameserver')
+const GameLogic = require('./game/server')
+const Config = require('./game/config')
+const gameserver = new GameServer(Config,new GameLogic())
 
 const wss = new WebSocketServer({ port: PORT })
 console.log('Starting websocketserver on port: ' + PORT)
