@@ -5,6 +5,7 @@ const GameLobby = require('./gamelobby')
 const StateManager = require('./statemanager')
 const NetworkLayer = require('./networklayer')
 const AccurateTimer = require('./util')
+const DummyLobby = require('./dummy').DummyLobby
 const EventEmitter = require('events')
 
 class Server extends EventEmitter{
@@ -30,7 +31,7 @@ class Server extends EventEmitter{
             }*/
         })
 
-        this.gamelobby = new GameLobby(false, Config.lobby_ip)
+        this.gamelobby = Config.local_play ? new DummyLobby() : new GameLobby(false, Config.lobby_ip)
         this.gamelobby.on('peer', (peer) => {
             console.log('new peer',peer)
             this.network.connect(false, peer)
@@ -59,7 +60,6 @@ class Server extends EventEmitter{
         this.gamelogic = new GameLogic()
         this.start()
     }
-
 
     new_playerid(){
         //TODO optimize

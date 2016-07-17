@@ -8,7 +8,27 @@ class GameLobby extends EventEmitter{
         this.isclient = isclient
         this.id = -1
         this.peer_from_id = new Map()
-        this.create_websocket(lobby_ip)
+        this.ws_connection = new WebSocket(lobby_ip)
+        this.ws_connection.onopen = () => {
+            console.log('[GAMELOBBY] websocket onopen')
+            console.log(this)
+            this.emit('log', 'success', 'connected to lobby websocket: ' + lobby_ip)
+            if(!this.isclient){
+                const server_info = {
+                    type: 'server',
+                    name: 'test',
+                }
+                const json = JSON.stringify(server_info)
+                this.ws_connection.send(json)
+                this.emit('log', 'info', 'sending server info to lobby: ' + json)
+            }
+        }
+        this.ws_connection.onmessage = this.on_ws_message.bind(this)
+        this.ws_connection.onerror = (error) => {
+            this.emit('log', 'fail', 'couldn\t connect to lobby: ' + lobby_ip)
+            console.log('[GAMELOBBY] websocket onerror')
+            console.log(error)
+        }
     }
 
     connect_to(to_id){
@@ -69,31 +89,6 @@ class GameLobby extends EventEmitter{
             this.peer_from_id.delete(to_id)
         })
         this.peer_from_id.set(to_id, peer)
-    }
-
-    create_websocket(lobby_ip){
-        const ws_connection = new WebSocket(lobby_ip)
-        ws_connection.onopen = () => {
-            console.log('[GAMELOBBY] websocket onopen')
-            console.log(this)
-            this.emit('log', 'success', 'connected to lobby websocket: ' + lobby_ip)
-            if(!this.isclient){
-                const server_info = {
-                    type: 'server',
-                    name: 'test',
-                }
-                const json = JSON.stringify(server_info)
-                ws_connection.send(json)
-                this.emit('log', 'info', 'sending server info to lobby: ' + json)
-            }
-        }
-        ws_connection.onmessage = this.on_ws_message.bind(this)
-        ws_connection.onerror = (error) => {
-            this.emit('log', 'fail', 'couldn\t connect to lobby: ' + lobby_ip)
-            console.log('[GAMELOBBY] websocket onerror')
-            console.log(error)
-        }
-        this.ws_connection = ws_connection
     }
 
     on_ws_message(e){

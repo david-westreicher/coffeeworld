@@ -64,7 +64,7 @@ class Networklayer extends EventEmitter{
             return
 
         // TODO is it better to use setinterval(send_ping, 1000)?
-        if(this.ping.shouldsend()){
+        if(this.ping && this.ping.shouldsend()){
             this.msg_ping.encode()
             this.send_msg(this.msg_ping, this.server_peer)
         }

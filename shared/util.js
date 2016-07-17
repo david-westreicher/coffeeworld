@@ -1,4 +1,5 @@
 class AccurateTimer{
+    //TODO create gettime here: node or browser
     constructor(fun, time, gettime){
         this.fun = fun
         this.waittime = time

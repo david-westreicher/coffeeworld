@@ -1,5 +1,5 @@
-import Server from './game/server'
-import WebRTC from './webrtc'
+import { DummyLobby, ClientServerConnect } from './shared/dummy'
+import Server from './shared/server'
 import GameLobby from './shared/gamelobby'
 import AccurateTimer from './shared/util'
 import NetworkLayer from './shared/networklayer'
@@ -19,7 +19,7 @@ class Game{
             this.player_id = player_id
         })
 
-        this.gamelobby = new GameLobby(true, config.lobby_ip)
+        this.gamelobby = config.local_play ? new DummyLobby() : new GameLobby(true, config.lobby_ip)
         this.gamelobby.on('server_list',(servers)=>{
             if(servers.length == 0)
                 return
@@ -43,31 +43,17 @@ class Game{
         })
 
         if(config.local_play){
-            // TODO fix local play
-            const serverrate = 1000/config.server_tickrate
-            this.start_local_server(serverrate)
+            const server = new Server()
+            server.on('log', (type, text)=>{
+                console.log('[SERVER] '+type+': '+text)
+            })
+            ClientServerConnect(this, server)
         }
     }
     
     tick(){
         this.update_command(this.command)
         this.network.send_cmd(this.command, this.player_id)
-    }
-
-    start_local_server(tickrate){
-        this.server = new Server()
-        this.server.statemanager = this.statemanager
-        this.server.new_player(123)
-        this.network.playerid = 123
-        this.command.playerid=123
-        const timer = new AccurateTimer(()=>{
-            this.update_command(this.command)
-            this.server.tick(this.statemanager.state, [this.command])
-        }, tickrate, window.performance.now.bind(window.performance))
-        timer.start()
-    }
-
-    send_cmd_to_server(){
     }
 
     on_new_frame(fun){
