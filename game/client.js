@@ -11,7 +11,10 @@ class Cubes extends Client{
         this.renderer = new Renderer()
         this.input = new Input()
         this.level = new Level(new Debug(this.statemanager))
-        super.on_new_frame(this.tick.bind(this))
+        super.on_new_frame(this.render_tick.bind(this))
+        this.gamelobby.on('servers',(servers)=>{
+            console.log('onservers', servers)
+        })
     }
 
     update_command(command){
@@ -25,10 +28,10 @@ class Cubes extends Client{
         this.input.reset()
     }
 
-    tick(state, event){
+    render_tick(state, player_id, event){
         let player_entity = -1
         for(const [id, entity] of state.get('player')){
-            if(entity.playerid == this.playerid){
+            if(entity.playerid == player_id){
                 player_entity = id
             }
         }

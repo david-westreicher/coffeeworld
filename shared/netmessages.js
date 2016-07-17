@@ -86,20 +86,22 @@ class MessageState{
         }
         this.buf = this.origbuf.slice(0,offset)
     }
-    decode(buffer, oldstate){
+
+    //TODO cache state
+    decode(buffer){
         const newstate = new Map()
         let offset = MSG_TYPE_BYTES
         for(const [type, encoder] of this.encoder_map){
             const num_entities = buffer.readUInt8(offset++)
             const newstate_of_type = new Map()
-            const state_of_type = oldstate.get(type)
             encoder.set_buffer(buffer)
             encoder.set_offset(offset)
             for(let i=0;i<num_entities;i++){
                 const id = buffer.readUInt16LE(offset)
                 offset+=2
                 encoder.set_offset(offset)
-                const entity = state_of_type.has(id)?state_of_type.get(id):this.create_entitity_funcs[type]()
+                // USE CACHED entities
+                const entity = this.create_entitity_funcs[type]()
                 encoder.read(entity)
                 newstate_of_type.set(id, entity)
                 offset = encoder.offset

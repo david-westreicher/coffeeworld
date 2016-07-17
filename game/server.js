@@ -12,8 +12,8 @@ class GameLogic{
         this.level = new Level()
     }
 
-    new_player(playerid){
-        const [id, player] = this.statemanager.create_entity('player')
+    new_player(statemanager, playerid){
+        const [id, player] = statemanager.create_entity('player')
         player.playerid = playerid
         this.init_player(player)
         this.entityid_from_playerid.set(playerid, id)
@@ -31,14 +31,14 @@ class GameLogic{
         player.lastpos = vec2.fromValues(0.0,0.0)
     }
 
-    player_left(playerid){
+    player_left(statemanager, playerid){
         const entityid = this.entityid_from_playerid.get(playerid)
-        this.statemanager.delete_entity(entityid)
+        statemanager.delete_entity(entityid)
     }
 
-    tick(state, cmds){
+    tick(statemanager,  cmds){
         for(const cmd of cmds){
-            const player = state.get('player').get(this.entityid_from_playerid.get(cmd.playerid))
+            const player = statemanager.state.get('player').get(this.entityid_from_playerid.get(cmd.playerid))
             if(!player)
                 continue
             if(cmd.up)
@@ -58,7 +58,7 @@ class GameLogic{
                 player.hook_length = 0
         }
 
-        const players = Array.from(state.get('player').values())
+        const players = Array.from(statemanager.state.get('player').values())
         this.physic_statisfy_constraints(players)
         this.physic_verlet_integration(players)
         this.physic_world_collision(players)

@@ -3,9 +3,13 @@ var dir_js = path.resolve(__dirname, 'src');
 var dir_build = path.resolve(__dirname, 'public');
 
 module.exports = {
-    entry: "./src/game/client.js",
+    entry: {
+        client: "./src/game/client.js",
+        localserver: "./src/localserver.js",
+    },
     output: {
-        filename: "public/bundle.js"
+        path: dir_build,
+        filename: "[name].js"
     },
 	module: {
 		loaders: [

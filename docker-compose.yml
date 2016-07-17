@@ -23,16 +23,14 @@ services:
       - ./shared:/app/src/shared
       - ./game:/app/src/game
       - /app/node_modules
-  webrtc:
+  signalling:
     build:
-      context: server
-      dockerfile: webrtc.dock
-    image: webrtc
-    container_name: webrtc-container
+      context: signalling
+      dockerfile: signalling.dock
+    image: signalling
+    container_name: signalling-container
     ports:
       - "9000:9000"
     volumes:
-      - ./server:/app
-      - ./shared:/app/src/shared
-      - ./game:/app/src/game
+      - ./signalling:/app
       - /app/node_modules

@@ -3,8 +3,8 @@ const MessagePlayerid = require('./netmessages').MessagePlayerid
 const MessagePing = require('./netmessages').MessagePing
 const MessageCmd = require('./netmessages').MessageCmd
 const MessageState = require('./netmessages').MessageState
+const EventEmitter = require('events')
 
-const IS_DEDICATED = true
 const MSG_ID    = 0
 const MSG_STATE = 1
 const MSG_PING  = 2
@@ -27,47 +27,52 @@ class Ping{
     }
 }
 
-class Networklayer{
-    static createServer(create_cmd, create_entitity_funcs){
-        const network = new Networklayer(create_entitity_funcs, create_cmd())
-        network.cmds = []
-        network.cmdspointer = 0
-        network.new_cmd = create_cmd
-        return network
+class Networklayer extends EventEmitter{
+    static createServer(config){
+        return new Networklayer(config) 
     }
-    static createClient(statemanager, command, create_entitity_funcs){
-        const network = new Networklayer(create_entitity_funcs, command)
-        network.playerid = -1
-        network.statemanager = statemanager
-        network.ping = new Ping(5000)
+
+    static createClient(config){
+        const network = new Networklayer(config)
+        network.ping = new Ping(2000)
         return network
     }
 
-    constructor(create_entitity_funcs, command){
+    constructor(config){
+        super()
+        this.config = config
         this.stats = new NetworkStats()
         this.msg_playerid = new MessagePlayerid(MSG_ID)
-        this.msg_cmd = new MessageCmd(MSG_CMD, command)
+        this.msg_cmd = new MessageCmd(MSG_CMD, config.get_command())
         this.msg_ping = new MessagePing(MSG_PING)
-        this.msg_state = new MessageState(MSG_STATE, create_entitity_funcs)
+        this.msg_state = new MessageState(MSG_STATE, config.get_entities)
     }
 
-    connect(webrtc){
-        this.webrtc = webrtc
-        this.webrtc.ondata(this.on_client_data.bind(this))
-        this.webrtc.connect()
+    connect(isclient, peer){
+        if(isclient){
+            peer.on('data',this.on_client_data.bind(this))
+            this.server_peer = peer
+        }else{
+            peer.on('data',(data)=>{
+                this.on_server_data(data, peer)
+            })
+        }
     }
 
-    send_cmd(cmd){
+    send_cmd(cmd, playerid){
+        if(!this.server_peer) // we need a connection to the server
+            return
+
         // TODO is it better to use setinterval(send_ping, 1000)?
         if(this.ping.shouldsend()){
             this.msg_ping.encode()
-            this.send_msg(this.msg_ping)
+            this.send_msg(this.msg_ping, this.server_peer)
         }
 
-        if(this.playerid==-1)
+        if(!playerid) // we need a playerid from the server first
             return
-        this.msg_cmd.encode(this.playerid, cmd)
-        this.send_msg(this.msg_cmd)
+        this.msg_cmd.encode(playerid, cmd)
+        this.send_msg(this.msg_cmd, this.server_peer)
     }
 
     on_client_data(data){
@@ -75,14 +80,14 @@ class Networklayer{
         this.stats.bytes_received(data.length)
         const msgtype = data.readUInt8(0)
         switch(msgtype){
-        case MSG_ID:
-            this.playerid = this.msg_playerid.decode(data)
-            this.on_playerid(this.playerid)
-            console.log('player id', this.playerid, data)
+        case MSG_ID:{
+            const player_id = this.msg_playerid.decode(data)
+            this.emit('player_id', player_id)
             break
+        }
         case MSG_STATE:{
-            const state = this.msg_state.decode(data, this.statemanager.state)
-            this.statemanager.state = state
+            const state = this.msg_state.decode(data)
+            this.emit('state', state)
             break
         }
         case MSG_PING:{
@@ -98,15 +103,7 @@ class Networklayer{
 
     send_msg(msg, peer){
         let data = msg.buf
-        if(peer){
-            if(IS_DEDICATED){
-                peer.send(new Uint8Array(data))
-                return
-            }
-            peer.send(data)
-        }else{
-            this.webrtc.send(data)
-        }
+        peer.send(data)
         this.stats.bytes_sent(data.length)
     }
 
@@ -120,24 +117,15 @@ class Networklayer{
             this.send_msg(this.msg_ping, peer)
             break
         case MSG_CMD:{
-            while(this.cmds.length <= this.cmdspointer){
-                this.cmds.push(this.new_cmd())
-            }
-            const cmd = this.cmds[this.cmdspointer++]
+            const cmd = this.config.get_command()
             const playerid = this.msg_cmd.decode(data, cmd)
             cmd.playerid = playerid
-            this.on_cmd(peer, cmd, playerid)
+            this.emit('command', cmd)
             break
         }
         default:
             throw msgtype + ' NotImplemented error, data:' + data
         }
-    }
-
-    get_cmds(){
-        const cmds = this.cmds.slice(0,this.cmdspointer)
-        this.cmdspointer = 0
-        return cmds
     }
 
     send_state(state, peer){

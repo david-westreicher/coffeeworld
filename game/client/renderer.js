@@ -69,8 +69,8 @@ class Renderer{
     render(level, players, id, bullets, stats, debugs){
         this.infobox.innerHTML = ', entity_id: ' + id +
             ', ping:' + stats.ping.toFixed(2) +
-            ', sending kbps:' + (stats.bytes_sent()*8.0/1000.0) +
-            ', receiving kbps:' + (stats.bytes_received()*8.0/1000.0) +
+            ', sending kbps:' + (stats.bytes_sent()) +
+            ', receiving kbps:' + (stats.bytes_received()) +
             ', entities: (players:' +players.size+'), (debugs:'+debugs.size+')'
         this.infobox.style.background = this.getcolor(id)
         this.infobox.style.color = '#FFFFFF'
