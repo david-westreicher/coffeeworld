@@ -1,6 +1,6 @@
 'use strict'
 const Config = require('../game/config')
-const GameLogic = require('../game/server')
+const GameLogic = require('../game/gamelogic')
 const GameLobby = require('./gamelobby')
 const StateManager = require('./statemanager')
 const NetworkLayer = require('./networklayer')

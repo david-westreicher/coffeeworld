@@ -5,7 +5,6 @@ const PLAYER_SIZE = 10
 const HOOK_SPEED = 8
 const HOOK_MAX_LENGTH = 800
 
-//TODO rename file into GameLogic
 class GameLogic{
     constructor(){
         this.entityid_from_playerid = new Map()
