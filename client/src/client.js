@@ -29,9 +29,7 @@ class Game{
             console.log('new server_peer',server_peer)
             this.network.connect(true, server_peer)
             const tickrate = 1000/config.client_tickrate
-            this.tick_task = new AccurateTimer(this.tick.bind(this),
-                    tickrate,
-                    window.performance.now.bind(window.performance))
+            this.tick_task = new AccurateTimer(this.tick.bind(this), tickrate)
             this.tick_task.start()
         })
         this.gamelobby.on('peer_left',(server_peer) => {

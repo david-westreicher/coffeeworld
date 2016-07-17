@@ -1,11 +1,19 @@
 class AccurateTimer{
-    //TODO create gettime here: node or browser
-    constructor(fun, time, gettime){
+    constructor(fun, time){
+        this.gettime = null
+        const is_client = typeof process.hrtime === 'undefined'
+        if(is_client){
+            this.gettime = window.performance.now.bind(window.performance)
+        }else{
+            this.gettime = ()=>{
+                const now = process.hrtime()
+                return now[0]*1e3 + now[1]*1e-6
+            }
+        }
         this.fun = fun
         this.waittime = time
-        this.gettime = gettime
         this.ticks = 0
-        this.nextsecond = gettime()
+        this.nextsecond = this.gettime()
     }
     start(){
         this.nexttick = this.gettime()

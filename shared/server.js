@@ -75,20 +75,9 @@ class Server extends EventEmitter{
         const tick_rate = 1000.0/Config.server_tickrate
         console.log('Starting GameServer with TICKRATE: '+ tick_rate)
 
-        const is_listen_server = typeof process.hrtime === 'undefined'
-        let time_now_fun = null
-        if(is_listen_server){
-            time_now_fun = window.performance.now.bind(window.performance)
-        }else{
-            time_now_fun = ()=>{
-                const now = process.hrtime()
-                return now[0]*1e3 + now[1]*1e-6
-            }
-        }
-        this.tickinterval = new AccurateTimer(this._tick.bind(this), tick_rate, time_now_fun)
+        this.tickinterval = new AccurateTimer(this._tick.bind(this), tick_rate)
         this.tickinterval.start()
-        this.emit('log', 'success', 'starting gameloop with rate: ' + tick_rate + ', '+
-                (is_listen_server?'in a browser':'in node'))
+        this.emit('log', 'success', 'starting gameloop with rate: ' + tick_rate)
     }
 
     _tick(){
