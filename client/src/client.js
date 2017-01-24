@@ -19,7 +19,7 @@ class Game{
             this.player_id = player_id
         })
 
-        this.gamelobby = config.local_play ? new DummyLobby() : new GameLobby(true, config.lobby_ip)
+        this.gamelobby = config.local_play ? new DummyLobby() : new GameLobby(true, config.lobby_ip, config.stun_ip)
         this.gamelobby.on('server_list',(servers)=>{
             if(servers.length == 0)
                 return
@@ -41,23 +41,27 @@ class Game{
         })
 
         if(config.local_play){
-            const server = new Server()
-            server.on('log', (type, text)=>{
+            this.server = new Server()
+            this.server.on('log', (type, text)=>{
                 console.log('[SERVER] '+type+': '+text)
             })
-            ClientServerConnect(this, server)
+            ClientServerConnect(this, this.server)
         }
     }
     
     tick(){
         this.update_command(this.command)
         this.network.send_cmd(this.command, this.player_id)
+        //if(this.server)
+            //this.server._tick()
     }
 
     on_new_frame(fun){
         const main = (event) => {
             window.requestAnimationFrame(main)
             fun(this.statemanager.state, this.player_id, event)
+            if(this.server)
+                this.server._tick()
         }
         main()
     }

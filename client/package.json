@@ -9,10 +9,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "simple-peer": "^6.0.4",
-    "random-seed": "^0.3.0",
     "gl-matrix": "^2.3.2",
-    "three": "^0.78.0"
+    "random-seed": "^0.3.0",
+    "simple-peer": "^6.0.4",
+    "three": "^0.78.0",
+    "webrtc-adapter": "^1.4.0"
   },
   "devDependencies": {
     "babel-core": "^6.10.4",
@@ -22,6 +23,8 @@
     "webpack": "^1.13.1"
   },
   "babel": {
-      "presets": ["es2015"]
+    "presets": [
+      "es2015"
+    ]
   }
 }

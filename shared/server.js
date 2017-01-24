@@ -16,7 +16,7 @@ class Server extends EventEmitter{
         this.peers = new Set()
         this.commands = []
 
-        this.statemanager = new StateManager(Config.get_entities)
+        this.statemanager = new StateManager(Config.get_entities, Config.debug)
         this.network = NetworkLayer.createServer(Config)
         this.network.on('command', (cmd)=>{
             this.commands.push(cmd)
@@ -31,13 +31,13 @@ class Server extends EventEmitter{
             }*/
         })
 
-        this.gamelobby = Config.local_play ? new DummyLobby() : new GameLobby(false, Config.lobby_ip)
+        this.gamelobby = Config.local_play ? new DummyLobby() : new GameLobby(false, Config.lobby_ip, Config.stun_ip)
         this.gamelobby.on('peer', (peer) => {
             console.log('new peer',peer)
             this.network.connect(false, peer)
             const playerid = this.new_playerid()
             this.peerids.set(peer, playerid)
-            this.gamelogic.new_player(this.statemanager, playerid)
+            this.gamelogic.new_player(playerid)
             this.peers_without_ids.add(playerid)
             console.log('new player with id: ' + playerid)
             this.emit('log', 'info', 'new player with id: ' + playerid)
@@ -45,7 +45,7 @@ class Server extends EventEmitter{
         this.gamelobby.on('peer_left', (peer) => {
             const playerid = this.peerids.get(peer)
             console.log('deletepeer', playerid)
-            this.gamelogic.player_left(this.statemanager, playerid)
+            this.gamelogic.player_left(playerid)
             this.peerids.delete(peer)
             this.emit('log', 'info', 'player left with id: ' + playerid)
         })
@@ -57,8 +57,7 @@ class Server extends EventEmitter{
             this.emit('log', type, text)
         })
 
-        this.gamelogic = new GameLogic()
-        this.start()
+        this.gamelogic = new GameLogic(this.statemanager)
     }
 
     new_playerid(){
@@ -81,7 +80,7 @@ class Server extends EventEmitter{
     }
 
     _tick(){
-        this.gamelogic.tick(this.statemanager, this.commands)
+        this.gamelogic.tick(this.commands)
         this.commands = []
 
         for(const [peer, playerid] of this.peerids){

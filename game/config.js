@@ -1,16 +1,26 @@
 module.exports = {
-    client_tickrate: 33,
-    server_tickrate: 33,
-    server_ip: 'ws://localhost:9000',
-    local_play: false,
+    client_tickrate: 60,
+    server_tickrate: 60,
+    lobby_ip: 'ws://localhost:9000',
+    stun_ip: 'localhost:3478',
+    local_play: true,
+    debug: true,
     get_entities:{
         player: () => {
             return {
-                x: 200.1,
-                y: 200.1,
+                x: 200,
+                y: 200,
                 hookx: 200,
                 hooky: 200,
                 playerid: 0,
+                size: 10,
+            }
+        },
+        food: () => {
+            return {
+                x: 200,
+                y: 200,
+                size: 200,
             }
         },
         debug: () => {

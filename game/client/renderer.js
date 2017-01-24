@@ -42,8 +42,7 @@ class Renderer{
         this.midy = window.innerHeight/2
         this.canvas.style.top = (this.midy-this.canvas.height/2)+'px'
         this.canvas.style.left = (this.midx-this.canvas.width/2)+'px'
-    }
-
+    } 
     getcolor(id){
         let color = this.colors.get(id)
         if(!color){
@@ -63,55 +62,75 @@ class Renderer{
         if(!player)
             return
         this.cam[0] += (player.x-this.cam[0])/4
-        this.cam[1] += (player.y-this.cam[1])/4
+        this.cam[1] += (-player.y-this.cam[1])/4
     }
 
-    render(level, players, id, bullets, stats, debugs){
-        this.infobox.innerHTML = ', entity_id: ' + id +
+    render(state, level, player_entity, stats){
+        const players = state.get('player')
+        const foods = state.get('food')
+        const debugs = state.get('debug')
+        this.infobox.innerHTML = ', entity_id: ' + player_entity +
             ', ping:' + stats.ping.toFixed(2) +
             ', sending kbps:' + (stats.bytes_sent()) +
             ', receiving kbps:' + (stats.bytes_received()) +
-            ', entities: (players:' +players.size+'), (debugs:'+debugs.size+')'
-        this.infobox.style.background = this.getcolor(id)
+            ', entities: (players:' +players.size+'), (foods:'+foods.size+'), (debugs:'+debugs.size+')'
+        this.infobox.style.background = this.getcolor(player_entity)
         this.infobox.style.color = '#FFFFFF'
 
         this.draw_ctx.setTransform(1,0,0,1,0,0)
         this.draw_ctx.clearRect(0, 0, this.canvas.width,this.canvas.height)
-        this.updatecam(players.get(id))
+        this.updatecam(players.get(player_entity))
         this.draw_ctx.setTransform(this.cam[2],0,0,this.cam[2],
             this.canvas.width/2-this.cam[0]*this.cam[2],
             this.canvas.height/2-this.cam[1]*this.cam[2])
 
         this.drawPlayers(this.draw_ctx, players)
+        this.drawFoods(this.draw_ctx, foods)
         this.drawLevel(this.draw_ctx, level)
         this.drawDebug(this.draw_ctx, debugs)
     }
 
+    drawFoods(ctx, foods){
+        ctx.fillStyle= '#00FF00'
+        for(const [id, food] of foods){
+            ctx.beginPath()
+            ctx.arc(food.x, -food.y, food.size, 0, 2*Math.PI)
+            ctx.fill()
+        }
+    }
+
     drawPlayers(ctx, players){
+        ctx.lineWidth= 10
         for(const [id, player] of players){
             const col = this.getcolor(id)
             // player
             ctx.fillStyle= col
             ctx.beginPath()
-            ctx.arc(player.x, player.y, 10, 0, 2*Math.PI)
+            ctx.arc(player.x, -player.y, player.size, 0, 2*Math.PI)
             ctx.fill()
             // hook
             ctx.beginPath()
-            ctx.arc(player.hookx, player.hooky, 5, 0, 2*Math.PI)
-            ctx.moveTo(player.hookx, player.hooky)
-            ctx.lineTo(player.x , player.y)
+            ctx.arc(player.hookx, -player.hooky, 5, 0, 2*Math.PI)
+            ctx.moveTo(player.hookx, -player.hooky)
+            ctx.lineTo(player.x , -player.y)
             ctx.stroke()
         }
     }
 
     drawLevel(ctx, level){
         ctx.strokeStyle= '#000000'
+        ctx.lineWidth= 10
         ctx.beginPath()
         for(let line of level.lines){
-            ctx.moveTo(line.start[0], line.start[1])
-            ctx.lineTo(line.end[0], line.end[1])
-            ctx.moveTo(line.mid[0], line.mid[1])
-            ctx.lineTo(line.mid[0]+line.normal[0]*10, line.mid[1]+line.normal[1]*10)
+            ctx.moveTo(line.start[0], -line.start[1])
+            ctx.lineTo(line.end[0], -line.end[1])
+        }
+        ctx.stroke()
+        ctx.lineWidth= 1
+        ctx.beginPath()
+        for(let line of level.lines){
+            ctx.moveTo(line.mid[0], -line.mid[1])
+            ctx.lineTo(line.mid[0]-line.normal[0]*20, -line.mid[1]+line.normal[1]*20)
         }
         ctx.stroke()
     }
@@ -120,8 +139,8 @@ class Renderer{
         ctx.strokeStyle= '#FF0000'
         ctx.beginPath()
         for(const debug of debugs.values()){
-            ctx.moveTo(debug.x0, debug.y0)
-            ctx.lineTo(debug.x1, debug.y1)
+            ctx.moveTo(debug.x0, -debug.y0)
+            ctx.lineTo(debug.x1, -debug.y1)
         }
         ctx.stroke()
     }

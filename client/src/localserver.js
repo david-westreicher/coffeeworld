@@ -4,6 +4,7 @@ class LocalServer extends Server{
     constructor(){
         super()
         this.on('log', this.log.bind(this))
+        this.start()
         setInterval(this.updatedom.bind(this), 1000)
     }
 

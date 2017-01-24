@@ -1,7 +1,13 @@
 const Random = require('random-seed')
 const vec2 = require('gl-matrix').vec2
+const normal_from_points = require('./util').normal_from_points
 
 const MAPS = {
+    minimal: {
+        bounds: 200,
+        balls: 0,
+        rects: 0,
+    },
     small: {
         bounds: 1200,
         balls: 10,
@@ -12,15 +18,13 @@ const MAPS = {
         balls: 30,
         rects: 30,
     },
+    colltest: {
+        bounds: 2500,
+        balls: 0,
+        rects: 0,
+    },
 }
-const CURR_MAP = MAPS.small
-
-const normal_from_points = (start, end)=>{
-    const normal = vec2.sub(vec2.create(), start, end)
-    vec2.set(normal, -normal[1], normal[0])
-    vec2.normalize(normal,normal)
-    return normal
-}
+const CURR_MAP = MAPS.big
 
 class Line{
     constructor(start, end, isreal = true){
@@ -39,8 +43,11 @@ class Level{
         // const seeded_rand = new Random(new Date().getMinutes())
         const seeded_rand = new Random(123435243)
         const bounds = CURR_MAP.bounds
+        this.size = bounds
         this.lines = []
         this.createBoundary(seeded_rand, bounds)
+        //this.lines.push(new Line([205,-150], [-195,-50]))
+        //this.lines.push(new Line([205,-50], [-195,-150]))
         for(let i =0;i<CURR_MAP.balls;i++){
             const x = seeded_rand.floatBetween(-bounds,bounds)
             const y = seeded_rand.floatBetween(-bounds,bounds)
@@ -70,7 +77,7 @@ class Level{
             for(let alpha=0;alpha<=1;alpha+=0.1){
                 const pos = vec2.lerp(vec2.create(), side[0], side[1], alpha)
                 vec2.scale(pos,pos,bounds)
-                vec2.scaleAndAdd(pos, pos, normal, seeded_rand.floatBetween(0,bounds/5))
+                vec2.scaleAndAdd(pos, pos, normal, -seeded_rand.floatBetween(0,bounds/5))
                 if(lastpos){
                     this.lines.push(new Line(pos, lastpos))
                 }
@@ -112,58 +119,107 @@ class Level{
 
      */
     collide(entity,size){
-        const corners = [[-1,-1],[1,1],[-1,1],[1,-1]]
-        const cpos = vec2.create()
-        const diff = vec2.create()
         const u = vec2.create()
         const w = vec2.create()
         const newspeed = vec2.create()
         const vel = vec2.sub(vec2.create(),entity.pos,entity.lastpos)
-        const veldir = vec2.normalize(vec2.create(),vel)
-        let bestdot = -1
-        let bestnorm = null
-        let bestdepth = 0
+        const diff = vec2.create()
+
+        let closest_dist = 0
+        const bestnormal = vec2.create()
+        const bestpos = vec2.create()
+        const collnormal = vec2.create()
+        const collpos = vec2.create()
+
         for(let line of this.lines){
-            let maxprenetation = -1
-            for(let corner of corners){
-                vec2.scaleAndAdd(cpos,entity.pos,corner,size)
-                vec2.sub(diff, line.start, cpos)
-                vec2.normalize(diff,diff)
-                const dot = vec2.dot(line.normal, diff)
-                if(dot>0)
-                    continue
-                    //const innerline = []
-                const innerdist = this.line_point_dist(line.inner,cpos)
-                if(innerdist>line.length/2)
-                    continue
-                const dist = this.line_point_dist(line,cpos)
-                if(dist<20){
-                    if(dist>maxprenetation){
-                        maxprenetation = dist
+            //  Collide moving sphere with line with minkowski sum
+            //                                         ___
+            //                                        /   \
+            //             *                         / _+_ \ < circle 1
+            //             |                         |\_|_/|
+            //       _     |      _                  |  |  |    
+            //      (_)----+-----(_)    ---->    *---|--+--|---* < line
+            //             |                         | _|_ | < rectangle
+            //             |                         |/_|_\|
+            //             *                         \  +  / < circle 2
+            //                                        \___/
+            //
+            let hascollided = false
+
+            //  if wrong direction -> no collision
+            if(vec2.dot(vel,line.normal)>0)
+                continue
+            //  if not inside line radius -> no collision
+            if(vec2.distance(entity.pos,line.mid) > line.length+size)
+                continue
+
+            //  Check if pos in minkowski sum:
+            //      1. check if pos in rectangle -> push out normal
+            const linedist = this.line_point_dist(line, entity.pos)
+            if(linedist<size && this.line_point_dist(line.inner, entity.pos) < line.length/2){
+                //          on which side of the line is pos
+                vec2.sub(diff, entity.pos, line.start)
+                if(vec2.dot(diff, line.normal)<0){
+                    //      behind normal
+                    vec2.scaleAndAdd(collpos, entity.pos, line.normal, size+linedist)
+                }else{
+                    //      in front of normal
+                    vec2.scaleAndAdd(collpos, entity.pos, line.normal, size-linedist)
+                }
+                vec2.copy(collnormal, line.normal)
+                if(this.debug)
+                    this.debug.debug(collpos, vec2.scaleAndAdd(vec2.create(),collpos, line.normal, -size))
+                hascollided = true
+            }
+            if(!hascollided){
+            //      2. check if pos in any circles -> push out circle normal
+                for(const circle_pos of [line.start, line.end]){
+                    const circle_dist = vec2.distance(entity.pos, circle_pos)
+                    if(circle_dist<size){
+                        vec2.sub(diff, entity.pos, circle_pos)
+                        vec2.normalize(diff,diff)
+                        vec2.copy(collnormal, diff)
+                        vec2.scaleAndAdd(collpos, entity.pos, diff, size-circle_dist)
+                        if(this.debug)
+                            this.debug.debug(circle_pos, collpos)
+                        hascollided = true
+                        break
                     }
                 }
             }
-            if(maxprenetation>0){
-                const dot = vec2.dot(line.normal, veldir)
-                if(dot>0 && dot>bestdot){
-                    bestdot = dot
-                    bestnorm = line.normal
-                    bestdepth = maxprenetation
+            if(hascollided){
+                // find the closest collision
+                const coll_dist = vec2.distance(collpos, entity.pos)
+                if(coll_dist>closest_dist){
+                    closest_dist = coll_dist
+                    vec2.copy(bestnormal, collnormal)
+                    vec2.copy(bestpos, collpos)
                 }
+            }else{
+            // TODO
+            //  Check for line intersection:
+            //      1. check if line intersects rectangle
+            //      2. check if line interects circle
+            //      3. set pos to closest intersection point
             }
+
         }
-        if(bestnorm){
+        if(closest_dist>0){
             // calculate new speed with friction/bounciness
-            vec2.scale(u,bestnorm,vec2.dot(bestnorm,vel))
+            vec2.scale(u,bestnormal,vec2.dot(bestnormal,vel))
             vec2.sub(w,vel,u)
             vec2.scale(w,w,1.0)
             vec2.scale(u,u,1.0)
             vec2.sub(newspeed,w,u)
 
-            vec2.scaleAndAdd(entity.pos, entity.pos, bestnorm, -bestdepth)
+            vec2.copy(entity.pos, bestpos)
             vec2.sub(entity.lastpos, entity.pos, newspeed)
-            if(this.debug)
-                this.debug.debug(entity.pos[0], entity.pos[1], entity.lastpos[0], entity.lastpos[1])
+            /*
+            if(this.debug){
+                this.debug.debug(entity.pos, entity.lastpos)
+                this.debug.debug(bestline.start, bestline.end)
+            }
+            */
         }
     }
 
@@ -193,6 +249,24 @@ class Level{
             }
         }
         return closestintersection 
+    }
+
+    segment_segment_intersect(start0, end0, start1, end1){
+        let s1_x = end0[0] - start0[0]
+        let s1_y = end0[1] - start0[1]
+        let s2_x = end1[0] - start1[0]
+        let s2_y = end1[1] - start1[1]
+
+        let s, t
+        s = (-s1_y * (start0[0] - start1[0]) + s1_x * (start0[1] - start1[1])) / (-s2_x * s1_y + s1_x * s2_y)
+        t = ( s2_x * (start0[1] - start1[1]) - s2_y * (start0[0] - start1[0])) / (-s2_x * s1_y + s1_x * s2_y)
+
+        if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+        {
+            // Collision detected
+            return true
+        }
+        return false
     }
 
     get_line_intersection(p0_x, p0_y, p1_x, p1_y, 

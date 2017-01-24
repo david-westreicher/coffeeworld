@@ -1,12 +1,21 @@
-const Peer = require('simple-peer')
+const Peer = require('./coffee-peer')
 const EventEmitter = require('events')
 // emits, 'peer', 'servers'
 
 class GameLobby extends EventEmitter{
-    constructor(isclient, lobby_ip){
+    constructor(isclient, lobby_ip, stun_ip){
         super()
         this.isclient = isclient
         this.id = -1
+        this.webrtc_config = {
+            'iceServers': [{
+                url: 'stun:' + stun_ip,
+                urls: 'stun:' + stun_ip,
+            }],
+            iceTransportType: 'all',
+            bundlePolicy: 'balanced',
+            rtcpMuxPolicy: 'negotiate',
+        }
         this.peer_from_id = new Map()
         this.ws_connection = new WebSocket(lobby_ip)
         this.ws_connection.onopen = () => {
@@ -38,12 +47,7 @@ class GameLobby extends EventEmitter{
         }
         const peer = new Peer({
             initiator: this.isclient,
-            config: {
-                'iceServers': [{
-                    url: 'stun:stun4.l.google.com:19302',
-                    urls: 'stun:stun4.l.google.com:19302'
-                }]
-            },
+            config: this.webrtc_config,
             channelConfig: {
                 ordered: false,
                 maxRetransmits: 0

@@ -1,7 +1,27 @@
 const MAX_ID = Math.pow(2,16)-1
 
+class Debug{
+    constructor(statemanager){
+        this.debugs = []
+        this.pointer = 0
+        for(let i=0;i<20;i++){
+            const [id, debug] = statemanager.create_entity('debug')
+            this.debugs.push(debug)
+        }
+    }
+
+    debug(start, end){
+        const debug = this.debugs[this.pointer]
+        debug.x0 = start[0]
+        debug.y0 = start[1]
+        debug.x1 = end[0]
+        debug.y1 = end[1]
+        this.pointer = (this.pointer+1)%this.debugs.length
+    }
+}
+
 class StateManager{
-    constructor(create_entitity_funcs){
+    constructor(create_entitity_funcs, debug = false){
         this.ids = new Set()
         this.create_entitity_funcs = create_entitity_funcs
         this.state = new Map()
@@ -9,6 +29,8 @@ class StateManager{
             this.state.set(type, new Map())
         }
         console.log(this.create_entitity_funcs)
+        if(debug)
+            this.debug = new Debug(this)
     }
 
     delete_entity(id){

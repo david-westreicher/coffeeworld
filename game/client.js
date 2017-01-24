@@ -36,7 +36,7 @@ class Cubes extends Client{
             }
         }
         //if(player_entity>=0)
-        this.renderer.render(this.level,state.get('player'), player_entity, state.get('bullet'), this.network.stats,state.get('debug'))
+        this.renderer.render(state, this.level, player_entity, this.network.stats)
     }
 }
 

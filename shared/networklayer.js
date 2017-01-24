@@ -108,7 +108,7 @@ class Networklayer extends EventEmitter{
     }
 
     on_server_data(data, peer){
-        data = Buffer.from(data)
+        data = new Buffer(data)
         this.stats.bytes_received(data.length)
         const msgtype = data.readUInt8(0)
         switch(msgtype){

@@ -34,3 +34,12 @@ services:
     volumes:
       - ./signalling:/app
       - /app/node_modules
+  stun:
+    build:
+      context: stun
+      dockerfile: stun.dock
+    image: stun
+    container_name: stun-container
+    network_mode: host
+    ports:
+      - "3478:3478"
